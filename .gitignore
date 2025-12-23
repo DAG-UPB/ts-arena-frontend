@@ -1,0 +1,10 @@
+# Build local
+docker-compose.yml
+venv-ts-frontend/
+.streamlit/
+# Secrets
+.env
+
+# Other
+.DS_Store
+*/__pycache__/
