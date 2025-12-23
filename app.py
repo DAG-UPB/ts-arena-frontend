@@ -156,7 +156,7 @@ with tab3:
     st.markdown("---")
     
     st.markdown("""
-    ### What you get:
+    ### Bring the benchmark to life with your models!
     
     - 🔑 **Personal API Key** for model registration and submission
     - 📊 **Access to benchmark datasets** and challenge specifications
@@ -171,7 +171,7 @@ with tab3:
     - Adherence to benchmark guidelines
     
     For more information, please contact us via email!
-                
+
     ### Help Us Validate Your Model Implementation:
     Transparency is at the heart of our live benchmarking project. We have integrated a wide range of state-of-the-art time series forecasting models to provide the community with real-time performance insights.
     To ensure that every model is evaluated under optimal conditions, **we invite the original authors and maintainers to review our implementations.** If you are a developer of one of the featured models, we would value your feedback on:
@@ -180,6 +180,6 @@ with tab3:
     - Data preprocessing steps.
     - Implementation-specific nuances.
                 
-    Our goal is to represent your work as accurately as possible. Please visit our [GitHub Repository](https://github.com/DAG-UPB) to review the code or open an issue for any suggested improvements.
+    Our goal is to represent your work as accurately as possible. Please visit our [GitHub Repository](https://github.com/DAG-UPB/ts-arena) to review the code or open an issue for any suggested improvements.
     """)
     # TODO: Change link to GitHub Repository
