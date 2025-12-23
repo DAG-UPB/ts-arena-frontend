@@ -427,6 +427,13 @@ def render_challenges_tab_component(api_client: DashboardAPIClient):
         status = selected_challenge.get('status', 'unknown')
         n_series = selected_challenge.get('n_time_series', 0)
         model_count = selected_challenge.get('model_count', 0)
+
+        if status == ChallengeStatus.ANNOUNCED.value:
+            if n_series == 0:
+                n_series = "tbd"
+            if model_count == 0:
+                model_count = "tbd"
+
         challenge_id = str(selected_challenge.get('challenge_id', ''))[:8]
         
         # Get frequency and calculate horizon/context in steps
