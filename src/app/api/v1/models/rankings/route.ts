@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
   console.log('Calling external API:', url);
   console.log('API_BASE_URL:', API_BASE_URL);
   
-  // ToDo: Add error handling
   const response = await fetch(url, {
     headers: {
       'X-API-Key': API_KEY,

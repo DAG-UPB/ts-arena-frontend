@@ -88,28 +88,33 @@ export default function RankingsTable({
         ),
       },
       {
-        accessorKey: 'elo_score',
+        accessorKey: 'elo_rating_median',
         header: 'ELO Score',
         cell: (info) => {
           const row = info.row.original;
+          const upperDiff = row.elo_ci_upper - row.elo_rating_median;
+          const lowerDiff = row.elo_rating_median - row.elo_ci_lower;
           return (
             <div className="text-right">
-              <span className="font-semibold">{row.elo_score.toFixed(1)}</span>
+              <span className="font-semibold">{row.elo_rating_median.toFixed(1)}</span>
               <div className="text-xs text-gray-500">
-                +{row.elo_ci_upper_diff.toFixed(1)}/-{row.elo_ci_lower_diff.toFixed(1)}
+                +{upperDiff.toFixed(1)}/-{lowerDiff.toFixed(1)}
               </div>
             </div>
           );
         },
       },
       {
-        accessorKey: 'mase_avg',
+        accessorKey: 'avg_mase',
         header: 'Avg MASE',
         cell: (info) => {
           const row = info.row.original;
+          if (row.avg_mase === null || row.mase_std === null) {
+            return <span className="text-gray-400">N/A</span>;
+          }
           return (
             <div className="text-right">
-              <span>{row.mase_avg.toFixed(3)}</span>
+              <span>{row.avg_mase.toFixed(3)}</span>
               <div className="text-xs text-gray-500">
                 ±{row.mase_std.toFixed(3)}
               </div>
@@ -118,14 +123,17 @@ export default function RankingsTable({
         },
       },
       {
-        accessorKey: 'n_evaluations',
+        accessorKey: 'evaluated_count',
         header: 'Evaluations',
-        cell: (info) => (
-          <span className="text-right">{(info.getValue() as number).toLocaleString()}</span>
-        ),
+        cell: (info) => {
+          const value = info.getValue() as number | null;
+          return (
+            <span className="text-right">{value !== null ? value.toLocaleString() : 'N/A'}</span>
+          );
+        },
       },
       {
-        accessorKey: 'n_matches',
+        accessorKey: 'matches_played',
         header: 'Matches',
         cell: (info) => (
           <span className="text-right">{(info.getValue() as number).toLocaleString()}</span>
@@ -188,28 +196,33 @@ export default function RankingsTable({
         ),
       },
       {
-        accessorKey: 'elo_score',
+        accessorKey: 'elo_rating_median',
         header: 'ELO Score',
         cell: (info) => {
           const row = info.row.original;
+          const upperDiff = row.elo_ci_upper - row.elo_rating_median;
+          const lowerDiff = row.elo_rating_median - row.elo_ci_lower;
           return (
             <div className="text-right">
-              <span className="font-semibold">{row.elo_score.toFixed(1)}</span>
+              <span className="font-semibold">{row.elo_rating_median.toFixed(1)}</span>
               <div className="text-xs text-gray-500">
-                +{row.elo_ci_upper_diff.toFixed(1)}/-{row.elo_ci_lower_diff.toFixed(1)}
+                +{upperDiff.toFixed(1)}/-{lowerDiff.toFixed(1)}
               </div>
             </div>
           );
         },
       },
       {
-        accessorKey: 'mase_avg',
+        accessorKey: 'avg_mase',
         header: 'Avg MASE',
         cell: (info) => {
           const row = info.row.original;
+          if (row.avg_mase === null || row.mase_std === null) {
+            return <span className="text-gray-400">N/A</span>;
+          }
           return (
             <div className="text-right">
-              <span>{row.mase_avg.toFixed(3)}</span>
+              <span>{row.avg_mase.toFixed(3)}</span>
               <div className="text-xs text-gray-500">
                 ±{row.mase_std.toFixed(3)}
               </div>

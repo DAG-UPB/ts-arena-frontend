@@ -8,23 +8,23 @@ export interface RankingFilters {
 export interface ModelRanking {
   model_id: number;
   model_name: string;
-  readable_id: string;
-  username: string;
+  readable_id?: string;
+  username?: string;
   organization_name: string;
   architecture?: string;
   model_size?: number;
-  elo_score: number;
+  elo_rating_median: number;
   elo_ci_lower: number;
   elo_ci_upper: number;
-  elo_ci_lower_diff: number;
-  elo_ci_upper_diff: number;
-  n_matches: number;
+  elo_ci_lower_diff?: number;
+  elo_ci_upper_diff?: number;
+  matches_played: number;
   n_bootstraps: number;
   rank_position: number;
-  mase_avg: number;
-  mase_std: number;
-  n_evaluations: number;
-  calculated_at: string;
+  avg_mase: number | null;
+  mase_std: number | null;
+  evaluated_count: number | null;
+  calculated_at?: string;
   calculation_date: string;
 }
 
@@ -41,6 +41,10 @@ export interface ChallengeDefinition {
 export interface FilterOptions {
   definitions: ChallengeDefinition[];
   frequency_horizons: string[];
+  calculation_dates: Array<{
+    calculation_date: string;
+    is_month_end: boolean;
+  }>;
 }
 
 export interface TimeRangeRanking {
@@ -74,6 +78,8 @@ export interface DailyRanking {
 export interface DefinitionRankingWithHistory {
   definition_id: number;
   definition_name: string;
+  scope_type: string;
+  scope_id: string;
   daily_rankings: DailyRanking[];
 }
 

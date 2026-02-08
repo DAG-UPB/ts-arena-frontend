@@ -8,8 +8,8 @@ import TimeSeriesChart from '@/src/components/TimeSeriesChart';
 import { getFilteredRankings, getRankingFilters, ModelRanking, FilterOptions, ChallengeDefinition } from '@/src/services/modelService';
 import { getDefinitionRounds } from '@/src/services/definitionService';
 
-const DEFINITION_ID = 226;
-const SERIES_ID = 1371;
+const DEFINITION_ID = 2;
+const SERIES_ID = 62;
 
 interface RankingsData {
   overall: ModelRanking[];
@@ -21,19 +21,31 @@ export default function Home() {
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     definitions: [],
     frequency_horizons: [],
+    calculation_dates: [],
   });
   const [rankingsData, setRankingsData] = useState<RankingsData>({
     overall: [],
     byDefinition: {},
     byFrequencyHorizon: {},
   });
-  const [selectedCalculationDate, setSelectedCalculationDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [selectedCalculationDate, setSelectedCalculationDate] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [oldestActiveRound, setOldestActiveRound] = useState<any>(null);
   const [roundLoading, setRoundLoading] = useState(true);
+
+  // Format calculation date for display
+  const formatCalculationDateLabel = (dateStr: string, isMonthEnd: boolean) => {
+    const date = new Date(dateStr);
+    const monthYear = `${date.toLocaleString('en-US', { month: 'short' })}-${date.getFullYear()}`;
+    return isMonthEnd ? monthYear : 'Recent';
+  };
+
+  // Generate dropdown options from API data
+  const monthOptions = filterOptions.calculation_dates.map((item) => ({
+    label: formatCalculationDateLabel(item.calculation_date, item.is_month_end),
+    value: item.calculation_date,
+  }));
 
   // Format frequency_horizon for display (e.g., "00:15:00::1 day" -> "15min / 1 day")
   const formatFrequencyHorizon = (fh: string) => {
@@ -61,7 +73,7 @@ export default function Home() {
     return () => setIsMounted(false);
   }, []);
 
-  // Fetch oldest active round for definition 226
+  // Fetch oldest active round
   useEffect(() => {
     const fetchOldestActiveRound = async () => {
       try {
@@ -96,10 +108,22 @@ export default function Home() {
         const options = await getRankingFilters();
         setFilterOptions(options);
         
+        // Set default calculation date to the first (most recent) one
+        if (!selectedCalculationDate && options.calculation_dates.length > 0) {
+          setSelectedCalculationDate(options.calculation_dates[0].calculation_date);
+          return; // Will re-run when selectedCalculationDate is set
+        }
+        
         // Build base filters
         const baseFilters: any = { limit: 100 };
+        // Only send calculation_date if it's a month-end date (not Recent)
         if (selectedCalculationDate) {
-          baseFilters.calculation_date = selectedCalculationDate;
+          const selectedDateInfo = options.calculation_dates.find(
+            d => d.calculation_date === selectedCalculationDate
+          );
+          if (selectedDateInfo?.is_month_end) {
+            baseFilters.calculation_date = selectedCalculationDate;
+          }
         }
         
         // Fetch overall rankings (no definition/frequency filters)
@@ -211,24 +235,29 @@ export default function Home() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold text-gray-900">Overall Rankings</h2>
             
-            {/* Calculation Date Filter */}
+            {/* Calculation Month Filter */}
             <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">Calculation Date</label>
+              <label className="text-xs text-gray-500">Period</label>
               <div className="relative group">
                 <Info className="w-4 h-4 text-gray-400 cursor-help" />
                 <div className="absolute right-0 top-6 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                  <div className="font-medium mb-1">Calculation Date</div>
+                  <div className="font-medium mb-1">Calculation Period</div>
                   <div className="text-gray-200">
-                    Sets the cutoff date for model evaluation. Use this to view rankings as they appeared on a specific date. All models are ranked based on their performance up to this date.
+                    Select a month to view rankings calculated at the end of that period. "Recent" shows the most current rankings.
                   </div>
                 </div>
               </div>
-              <input
-                type="date"
+              <select
                 value={selectedCalculationDate}
                 onChange={(e) => setSelectedCalculationDate(e.target.value)}
-                className="px-2 py-1 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-              />
+                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer"
+              >
+                {monthOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <RankingsTable rankings={rankingsData.overall} />

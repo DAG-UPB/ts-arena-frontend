@@ -16,9 +16,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TS-Arena",
   description: "Time Series Forecasting Arena - Browse challenges and visualize time series data",
-  // TODO: Change icon
   icons: {
-    icon: '/file.svg',
+    icon: '/rocket.svg',
   },
 };
 

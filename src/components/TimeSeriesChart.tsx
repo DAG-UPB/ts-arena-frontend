@@ -644,7 +644,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                     <h3 className="font-semibold text-gray-900">
                       {series.series_name || `Series ${series.series_id}`}
                     </h3>
-                    <p className="text-sm text-gray-500">ID: {series.series_id}</p>
                   </div>
                 </div>
                 <span className="text-sm text-gray-500">

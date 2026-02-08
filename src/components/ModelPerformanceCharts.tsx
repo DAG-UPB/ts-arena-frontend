@@ -22,6 +22,17 @@ export default function ModelPerformanceCharts({ definitionRankings }: ModelPerf
     }));
   };
 
+  const getChartTitle = (definition: DefinitionRankingWithHistory) => {
+    if (definition.scope_type === 'global') {
+      return 'Overall Ranking';
+    } else if (definition.scope_type === 'definition') {
+      return definition.definition_name;
+    } else if (definition.scope_type === 'frequency_horizon') {
+      return definition.scope_id;
+    }
+    return definition.scope_type; // fallback
+  };
+
   if (!definitionRankings || definitionRankings.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
@@ -30,11 +41,31 @@ export default function ModelPerformanceCharts({ definitionRankings }: ModelPerf
     );
   }
 
+  // Sort rankings to show global first, then definitions (alphabetically), then frequency_horizon
+  const sortedRankings = [...definitionRankings].sort((a, b) => {
+    // Global always comes first
+    if (a.scope_type === 'global') return -1;
+    if (b.scope_type === 'global') return 1;
+    
+    // Frequency_horizon always comes last
+    if (a.scope_type === 'frequency_horizon') return 1;
+    if (b.scope_type === 'frequency_horizon') return -1;
+    
+    // Both are definitions, sort alphabetically by name
+    if (a.scope_type === 'definition' && b.scope_type === 'definition') {
+      return a.definition_name.localeCompare(b.definition_name);
+    }
+    
+    return 0;
+  });
+
   return (
     <div className="space-y-4">
-      {definitionRankings.map((definition) => {
+      {sortedRankings.map((definition) => {
+        const uniqueKey = `${definition.scope_type}-${definition.scope_id}`;
         const isExpanded = expandedDefinitions[definition.definition_id];
         const dailyRankings = definition.daily_rankings || [];
+        const chartTitle = getChartTitle(definition);
         
         // Sort rankings by date
         const sortedRankings = [...dailyRankings].sort((a, b) => 
@@ -49,7 +80,7 @@ export default function ModelPerformanceCharts({ definitionRankings }: ModelPerf
         const ranks = sortedRankings.map(r => r.rank_position);
 
         return (
-          <div key={definition.definition_id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+          <div key={uniqueKey} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
             <button
               onClick={() => toggleDefinition(definition.definition_id)}
               className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -61,7 +92,7 @@ export default function ModelPerformanceCharts({ definitionRankings }: ModelPerf
                   <ChevronRight className="h-5 w-5 text-gray-500" />
                 )}
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {definition.definition_name}
+                  {chartTitle}
                 </h3>
               </div>
               <div className="flex items-center space-x-4">
@@ -71,13 +102,15 @@ export default function ModelPerformanceCharts({ definitionRankings }: ModelPerf
                     <span className="text-gray-700 text-base font-semibold">Rank: #{sortedRankings[sortedRankings.length - 1].rank_position}</span>
                   </>
                 )}
-                <Link
-                  href={`/challenges/${definition.definition_id}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  View Challenge →
-                </Link>
+                {definition.scope_type === 'definition' && (
+                  <Link
+                    href={`/challenges/${definition.definition_id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    View Challenge →
+                  </Link>
+                )}
               </div>
             </button>
 
