@@ -1,0 +1,330 @@
+'use client';
+
+import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  ColumnDef,
+  flexRender,
+  SortDirection,
+} from '@tanstack/react-table';
+import { ModelRanking } from '@/src/services/modelService';
+
+interface RankingsTableProps {
+  rankings: ModelRanking[];
+  compact?: boolean;
+  title?: string;
+  limit?: number;
+  definitionId?: number;
+}
+
+// Text search filter component
+function TextSearchFilter({ column }: { column: any }) {
+  const filterValue = (column.getFilterValue() as string) || '';
+
+  return (
+    <div onClick={(e) => e.stopPropagation()} className="mt-1">
+      <input
+        type="text"
+        value={filterValue}
+        onChange={(e) => column.setFilterValue(e.target.value || undefined)}
+        placeholder="Search..."
+        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+      />
+    </div>
+  );
+}
+
+// Numeric max filter component
+function NumberMaxFilter({ column }: { column: any }) {
+  const filterValue = (column.getFilterValue() as number) || '';
+
+  return (
+    <div onClick={(e) => e.stopPropagation()} className="mt-1">
+      <input
+        type="number"
+        value={filterValue}
+        onChange={(e) => column.setFilterValue(e.target.value ? Number(e.target.value) : undefined)}
+        placeholder="Max (M)..."
+        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+      />
+    </div>
+  );
+}
+
+export default function RankingsTable({ 
+  rankings,
+  compact = false,
+  title,
+  limit,
+  definitionId,
+}: RankingsTableProps) {
+  const router = useRouter();
+
+  const handleRowClick = (modelId: string, modelName: string) => {
+    router.push(`/models/${modelId}`);
+  };
+
+  // Apply limit if specified
+  const displayedRankings = limit ? rankings.slice(0, limit) : rankings;
+
+  const fullColumns = useMemo<ColumnDef<ModelRanking>[]>(
+    () => [
+      {
+        accessorKey: 'rank_position',
+        header: 'Rank',
+        cell: (info) => (
+          <span className="font-semibold text-gray-900">{info.getValue() as number}</span>
+        ),
+      },
+      {
+        accessorKey: 'model_name',
+        header: 'Model Name',
+        cell: (info) => (
+          <span className="font-medium text-gray-900">{info.getValue() as string}</span>
+        ),
+      },
+      {
+        accessorKey: 'elo_score',
+        header: 'ELO Score',
+        cell: (info) => {
+          const row = info.row.original;
+          return (
+            <div className="text-right">
+              <span className="font-semibold">{row.elo_score.toFixed(1)}</span>
+              <div className="text-xs text-gray-500">
+                +{row.elo_ci_upper_diff.toFixed(1)}/-{row.elo_ci_lower_diff.toFixed(1)}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'mase_avg',
+        header: 'Avg MASE',
+        cell: (info) => {
+          const row = info.row.original;
+          return (
+            <div className="text-right">
+              <span>{row.mase_avg.toFixed(3)}</span>
+              <div className="text-xs text-gray-500">
+                ±{row.mase_std.toFixed(3)}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'n_evaluations',
+        header: 'Evaluations',
+        cell: (info) => (
+          <span className="text-right">{(info.getValue() as number).toLocaleString()}</span>
+        ),
+      },
+      {
+        accessorKey: 'n_matches',
+        header: 'Matches',
+        cell: (info) => (
+          <span className="text-right">{(info.getValue() as number).toLocaleString()}</span>
+        ),
+      },
+      {
+        accessorKey: 'readable_id',
+        header: 'Model ID',
+        cell: (info) => (
+          <span className="text-gray-600 font-mono text-xs">{info.getValue() as string}</span>
+        ),
+      },
+      {
+        accessorKey: 'organization_name',
+        header: 'Organization',
+        cell: (info) => info.getValue() as string,
+      },
+      {
+        accessorKey: 'architecture',
+        header: 'Architecture',
+        cell: (info) => (
+          <span className="text-gray-700">{(info.getValue() as string) || 'N/A'}</span>
+        ),
+      },
+      {
+        accessorKey: 'model_size',
+        header: 'Model Size',
+        filterFn: (row, columnId, filterValue) => {
+          const value = row.getValue(columnId) as number;
+          if (!filterValue) return true;
+          return value <= filterValue;
+        },
+        cell: (info) => {
+          const size = info.getValue() as number;
+          return (
+            <span className="text-gray-700 text-right block">
+              {size ? `${size.toLocaleString()}M` : 'N/A'}
+            </span>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const compactColumns = useMemo<ColumnDef<ModelRanking>[]>(
+    () => [
+      {
+        accessorKey: 'rank_position',
+        header: 'Rank',
+        cell: (info) => (
+          <span className="font-semibold text-gray-900">{info.getValue() as number}</span>
+        ),
+      },
+      {
+        accessorKey: 'model_name',
+        header: 'Model Name',
+        cell: (info) => (
+          <span className="font-medium text-gray-900">{info.getValue() as string}</span>
+        ),
+      },
+      {
+        accessorKey: 'elo_score',
+        header: 'ELO Score',
+        cell: (info) => {
+          const row = info.row.original;
+          return (
+            <div className="text-right">
+              <span className="font-semibold">{row.elo_score.toFixed(1)}</span>
+              <div className="text-xs text-gray-500">
+                +{row.elo_ci_upper_diff.toFixed(1)}/-{row.elo_ci_lower_diff.toFixed(1)}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'mase_avg',
+        header: 'Avg MASE',
+        cell: (info) => {
+          const row = info.row.original;
+          return (
+            <div className="text-right">
+              <span>{row.mase_avg.toFixed(3)}</span>
+              <div className="text-xs text-gray-500">
+                ±{row.mase_std.toFixed(3)}
+              </div>
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const columns = compact ? compactColumns : fullColumns;
+
+  const table = useReactTable({
+    data: displayedRankings ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      sorting: [
+        {
+          id: 'rank_position',
+          desc: false,
+        },
+      ],
+    },
+  });
+
+  const getSortIcon = (isSorted: false | SortDirection) => {
+    if (!isSorted) {
+      return <span className="ml-1 text-gray-400">↕</span>;
+    }
+    return <span className="ml-1">{isSorted === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {title && (
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          {definitionId ? (
+            <h3 
+              className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={() => router.push(`/challenges/${definitionId}`)}
+            >
+              {title}
+            </h3>
+          ) : (
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          )}
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  const columnId = header.column.id;
+                  const showTextFilter = !compact && (columnId === 'model_name' || columnId === 'readable_id');
+                  const showNumberMaxFilter = !compact && columnId === 'model_size';
+                  
+                  return (
+                    <th
+                      key={header.id}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      <div
+                        className={`flex items-center ${
+                          header.column.getCanSort() ? 'cursor-pointer hover:text-gray-700' : ''
+                        }`}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                        {header.column.getCanSort() &&
+                          getSortIcon(header.column.getIsSorted())}
+                      </div>
+                      
+                      {showTextFilter && <TextSearchFilter column={header.column} />}
+                      {showNumberMaxFilter && <NumberMaxFilter column={header.column} />}
+                    </th>
+                  );
+                })}
+              </tr>
+            ))}
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {table.getRowModel().rows.map((row) => (
+              <tr 
+                key={row.id} 
+                className="hover:bg-gray-50 cursor-pointer transition-colors"
+                onClick={() => handleRowClick(String(row.original.model_id), row.original.model_name)}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {table.getRowModel().rows.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          No rankings found.
+        </div>
+      )}
+    </div>
+  );
+}
