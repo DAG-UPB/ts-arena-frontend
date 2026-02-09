@@ -141,13 +141,6 @@ export default function RankingsTable({
         ),
       },
       {
-        accessorKey: 'readable_id',
-        header: 'Model ID',
-        cell: (info) => (
-          <span className="text-gray-600 font-mono text-xs">{info.getValue() as string}</span>
-        ),
-      },
-      {
         accessorKey: 'organization_name',
         header: 'Organization',
         cell: (info) => info.getValue() as string,
