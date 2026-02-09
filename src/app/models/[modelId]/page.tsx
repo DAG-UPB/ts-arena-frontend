@@ -87,7 +87,7 @@ export default function ModelDetailPage() {
                 <label className="block text-sm font-medium text-gray-500 mb-1">
                   Model Size
                 </label>
-                <div className="text-lg text-gray-900">{modelDetails.model_size.toLocaleString()} parameters</div>
+                <div className="text-lg text-gray-900">{modelDetails.model_size.toLocaleString()}M parameters</div>
               </div>
 
               <div>
