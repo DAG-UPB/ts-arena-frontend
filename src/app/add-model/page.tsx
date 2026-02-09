@@ -20,7 +20,7 @@ export default function InfoPage() {
           Ready to test your forecasting models against the best? Participate actively in our benchmark challenges! 
           Simply send us an email and we&apos;ll provide you with an API key to get started. Find detailed participation instructions in our{' '}
           <a 
-            href="https://github.com/DAG-UPB/ts-arena-backend" 
+            href="https://github.com/DAG-UPB/ts-arena" 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-blue-700 hover:text-blue-900 font-semibold underline"
@@ -207,7 +207,7 @@ export default function InfoPage() {
         </p>
         
         <a 
-          href="https://github.com/DAG-UPB" 
+          href="https://github.com/DAG-UPB/ts-arena" 
           target="_blank" 
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors"
