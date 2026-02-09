@@ -11,6 +11,7 @@ import {
   flexRender,
   SortDirection,
 } from '@tanstack/react-table';
+import { Info } from 'lucide-react';
 import { ModelRanking } from '@/src/services/modelService';
 
 interface RankingsTableProps {
@@ -160,7 +161,19 @@ export default function RankingsTable({
       },
       {
         accessorKey: 'model_size',
-        header: 'Model Size',
+        size: 150,
+        minSize: 150,
+        header: () => (
+          <div className="flex items-center gap-1.5 normal-case">
+            <span>Model Size</span>
+            <div className="relative group">
+              <Info className="w-4 h-4 text-gray-400 cursor-help" />
+              <div className="absolute right-0 top-6 w-48 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                Model sizes are shown in million parameters
+              </div>
+            </div>
+          </div>
+        ),
         filterFn: (row, columnId, filterValue) => {
           const value = row.getValue(columnId) as number;
           if (!filterValue) return true;
