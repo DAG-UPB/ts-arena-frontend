@@ -1,5 +1,6 @@
 import Breadcrumbs from '@/src/components/Breadcrumbs';
-import { Mail, Key, TrendingUp, Trophy, BarChart3, Users, CheckCircle, Github } from 'lucide-react';
+import { Mail, Key, TrendingUp, Trophy, BarChart3, Users, CheckCircle } from 'lucide-react';
+import { siGithub } from 'simple-icons/icons';
 
 export default function InfoPage() {
   return (
@@ -169,7 +170,9 @@ export default function InfoPage() {
       {/* Model Validation Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-start gap-3 mb-4">
-          <Github className="w-6 h-6 text-gray-900 flex-shrink-0 mt-1" />
+          <svg role="img" viewBox="0 0 24 24" className="w-6 h-6 text-gray-900 flex-shrink-0 mt-1 fill-current" xmlns="http://www.w3.org/2000/svg">
+            <path d={siGithub.path} />
+          </svg>
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Help Us Validate Model Implementations</h2>
             <p className="text-gray-700">
@@ -212,7 +215,9 @@ export default function InfoPage() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors"
         >
-          <Github className="w-5 h-5" />
+          <svg role="img" viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
+            <path d={siGithub.path} />
+          </svg>
           View on GitHub
         </a>
       </div>

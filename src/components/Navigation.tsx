@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { siGithub } from 'simple-icons/icons';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -40,6 +41,20 @@ export default function Navigation() {
                 );
               })}
             </div>
+          </div>
+          <div className="flex items-center">
+            <a
+              href="https://github.com/DAG-UPB/ts-arena"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              aria-label="View on GitHub"
+            >
+              <svg role="img" viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
+                <path d={siGithub.path} />
+              </svg>
+              <span>GitHub</span>
+            </a>
           </div>
         </div>
       </div>

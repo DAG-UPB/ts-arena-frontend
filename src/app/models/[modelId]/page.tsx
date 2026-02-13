@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
 import ModelPerformanceCharts from '@/src/components/ModelPerformanceCharts';
 import ModelSeriesList from '@/src/components/ModelSeriesList';
+import DetailsCard from '@/src/components/DetailsCard';
 import { getModelRankings, ModelDetailRankings, getModelSeriesByDefinition, ModelSeriesByDefinition, getModelDetails, ModelDetails } from '@/src/services/modelService';
 
 export default function ModelDetailPage() {
@@ -53,90 +54,64 @@ export default function ModelDetailPage() {
           ]} 
         />
 
+        {loading ? (
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="text-lg text-gray-600">Loading model details...</div>
+          </div>
+        ) : modelDetails ? (
+          <DetailsCard
+            title={modelDetails.name}
+            id={`Model ID: ${modelDetails.readable_id}`}
+            fields={[
+              {
+                label: 'Model Family',
+                value: modelDetails.model_family
+              },
+              {
+                label: 'Architecture',
+                value: modelDetails.architecture
+              },
+              {
+                label: 'Model Size',
+                value: `${modelDetails.model_size.toLocaleString()}M parameters`
+              },
+              {
+                label: 'Pretraining Data',
+                value: modelDetails.pretraining_data
+              },
+              {
+                label: 'Hosting',
+                value: modelDetails.hosting
+              },
+              {
+                label: 'Publishing Date',
+                value: new Date(modelDetails.publishing_date).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })
+              }
+            ]}
+          />
+        ) : (
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="text-lg text-gray-600">Failed to load model details.</div>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-md p-8 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Model Details</h1>
-          
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Ranking Performance Over Time</h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Monthly ELO score evolution across all challenges, individual challenge definitions, and frequency/horizon combinations.
+          </p>
           {loading ? (
             <div className="text-center">
-              <div className="text-lg text-gray-600">Loading model details...</div>
-            </div>
-          ) : modelDetails ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Model Name
-                </label>
-                <div className="text-lg text-gray-900">{modelDetails.name}</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Model ID
-                </label>
-                <div className="text-lg text-gray-900 font-mono">{modelDetails.readable_id}</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Model Family
-                </label>
-                <div className="text-lg text-gray-900">{modelDetails.model_family}</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Model Size
-                </label>
-                <div className="text-lg text-gray-900">{modelDetails.model_size.toLocaleString()}M parameters</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Hosting
-                </label>
-                <div className="text-lg text-gray-900">{modelDetails.hosting}</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Architecture
-                </label>
-                <div className="text-lg text-gray-900">{modelDetails.architecture}</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Pretraining Data
-                </label>
-                <div className="text-lg text-gray-900">{modelDetails.pretraining_data}</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Publishing Date
-                </label>
-                <div className="text-lg text-gray-900">
-                  {new Date(modelDetails.publishing_date).toLocaleDateString()}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="text-lg text-gray-600">Failed to load model details.</div>
-            </div>
-          )}
-        </div>
-
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Performance by Challenge</h2>
-          {loading ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
               <div className="text-lg text-gray-600">Loading rankings...</div>
             </div>
           ) : rankingsData ? (
             <ModelPerformanceCharts definitionRankings={rankingsData.definition_rankings} />
           ) : (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="text-center">
               <div className="text-lg text-gray-600">Failed to load rankings data.</div>
             </div>
           )}

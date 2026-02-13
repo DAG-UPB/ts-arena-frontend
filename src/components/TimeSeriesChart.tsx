@@ -339,11 +339,22 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
     <div className="bg-white rounded-lg shadow p-6">
       <div className="mb-6">
         {on_title_page && definitionId ? (
-          <Link href={`/challenges/${definitionId}/${challengeId}`}>
-            <h2 className="text-xl font-semibold mb-4 text-blue-600 hover:text-blue-800 cursor-pointer transition-colors">
-              {challengeName}
+          <div className="mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 animate-pulse">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                Now Live!
+              </span>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Currently competing in challenge:{' '}
+              <Link href={`/challenges/${definitionId}/${challengeId}`}>
+                <span className="text-blue-600 hover:text-blue-700 underline decoration-2 underline-offset-2 transition-colors">
+                  {challengeName}
+                </span>
+              </Link>
             </h2>
-          </Link>
+          </div>
         ) : (
           <h2 className="text-xl font-semibold mb-4">{challengeName}</h2>
         )}

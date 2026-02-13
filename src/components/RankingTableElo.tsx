@@ -14,7 +14,7 @@ import {
 import { Info } from 'lucide-react';
 import { ModelRanking } from '@/src/services/modelService';
 
-interface RankingsTableProps {
+interface RankingTableEloProps {
   rankings: ModelRanking[];
   compact?: boolean;
   title?: string;
@@ -56,13 +56,13 @@ function NumberMaxFilter({ column }: { column: any }) {
   );
 }
 
-export default function RankingsTable({ 
+export default function RankingTableElo({ 
   rankings,
   compact = false,
   title,
   limit,
   definitionId,
-}: RankingsTableProps) {
+}: RankingTableEloProps) {
   const router = useRouter();
 
   const handleRowClick = (modelId: string, modelName: string) => {

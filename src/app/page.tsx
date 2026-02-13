@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
-import RankingsTable from '@/src/components/RankingsTable';
+import RankingTableElo from '@/src/components/RankingTableElo';
 import TimeSeriesChart from '@/src/components/TimeSeriesChart';
 import { getFilteredRankings, getRankingFilters, ModelRanking, FilterOptions, ChallengeDefinition } from '@/src/services/modelService';
 import { getDefinitionRounds } from '@/src/services/definitionService';
@@ -185,7 +185,7 @@ export default function Home() {
             TS-Arena Model Rankings
           </h1>
           <div className="text-center py-12">
-            <div className="text-lg text-gray-600">Loading rankings...</div>
+            <div className="text-lg text-gray-600">Loading ranking...</div>
           </div>
         </main>
       </div>
@@ -230,10 +230,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* Overall Rankings (Full Table) */}
+        {/* Overall Ranking (Full Table) */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-gray-900">Overall Rankings</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">Overall Ranking</h2>
             
             {/* Calculation Month Filter */}
             <div className="flex items-center gap-2">
@@ -243,7 +243,7 @@ export default function Home() {
                 <div className="absolute right-0 top-6 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                   <div className="font-medium mb-1">Calculation Period</div>
                   <div className="text-gray-200">
-                    Select a month to view rankings calculated at the end of that period. "Recent" shows the most current rankings.
+                    Select a month to view the ranking calculated at the end of that period. "Recent" shows the most current ranking.
                   </div>
                 </div>
               </div>
@@ -260,15 +260,18 @@ export default function Home() {
               </select>
             </div>
           </div>
-          <RankingsTable rankings={rankingsData.overall} />
+          <RankingTableElo rankings={rankingsData.overall} />
         </div>
 
         {/* Rankings by Challenge Definition */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Rankings by Challenge</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Challenge</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Rankings evaluated for each specific challenge definition.
+          </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filterOptions.definitions.map((def) => (
-              <RankingsTable
+              <RankingTableElo
                 key={def.id}
                 rankings={rankingsData.byDefinition[def.id] || []}
                 compact
@@ -282,10 +285,13 @@ export default function Home() {
 
         {/* Rankings by Frequency/Horizon */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Rankings by Frequency / Horizon</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Frequency & Horizon Combinations</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Rankings evaluated across different forecast frequency and horizon configurations.
+          </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filterOptions.frequency_horizons.map((fh) => (
-              <RankingsTable
+              <RankingTableElo
                 key={fh}
                 rankings={rankingsData.byFrequencyHorizon[fh] || []}
                 compact
