@@ -11,7 +11,7 @@ import { getModelRankings, ModelDetailRankings, getModelSeriesByDefinition, Mode
 export default function ModelDetailPage() {
   const params = useParams();
   const modelId = params.modelId as string;
-  
+
   const [modelDetails, setModelDetails] = useState<ModelDetails | null>(null);
   const [rankingsData, setRankingsData] = useState<ModelDetailRankings | null>(null);
   const [seriesData, setSeriesData] = useState<ModelSeriesByDefinition | null>(null);
@@ -47,11 +47,11 @@ export default function ModelDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
-        <Breadcrumbs 
+        <Breadcrumbs
           items={[
             { label: 'Rankings', href: '/' },
             { label: `Model #${modelId}`, href: `/models/${modelId}` }
-          ]} 
+          ]}
         />
 
         {loading ? (
@@ -78,10 +78,6 @@ export default function ModelDetailPage() {
               {
                 label: 'Pretraining Data',
                 value: modelDetails.pretraining_data
-              },
-              {
-                label: 'Hosting',
-                value: modelDetails.hosting
               },
               {
                 label: 'Publishing Date',
