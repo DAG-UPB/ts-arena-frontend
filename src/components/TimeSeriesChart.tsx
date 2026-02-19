@@ -13,6 +13,16 @@ import { parse, toSeconds } from 'iso8601-duration';
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
+// Convert ISO 8601 duration to milliseconds
+function durationToMs(isoStr: string | undefined): number | null {
+  if (!isoStr) return null;
+  try {
+    return toSeconds(parse(isoStr)) * 1000;
+  } catch {
+    return null;
+  }
+}
+
 // Convert ISO 8601 duration to human-readable format
 function formatFrequency(freq: string | undefined): string {
   if (!freq) return 'N/A';
@@ -68,7 +78,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedSeries, setExpandedSeries] = useState<Set<number>>(new Set());
-  
+
   // Forecast filter state
   const [maxSizeFilter, setMaxSizeFilter] = useState<string>('');
   const [architectureFilter, setArchitectureFilter] = useState<string>('');
@@ -327,13 +337,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
   };
 
   const filterOptions = getFilterOptions();
-
-  const config: PlotParams['config'] = {
-    responsive: true,
-    displayModeBar: true,
-    displaylogo: false,
-    modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-  };
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -602,6 +605,24 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
 
           const plotData: PlotParams['data'] = traces;
 
+          // Compute default zoom: show last 3× horizon of context + full forecast window.
+          const defaultXRange: [string, string] | undefined = (() => {
+            const horizonMs = durationToMs(horizon);
+
+            if (!horizonMs || !series.contextData?.length) {
+              return undefined;
+            }
+
+            const contextEnd = new Date(
+              series.contextData[series.contextData.length - 1].ts
+            );
+
+            const rangeStart = new Date(contextEnd.getTime() - 3 * horizonMs);
+            const rangeEnd = new Date(contextEnd.getTime() + 1.1 * horizonMs);
+
+            return [rangeStart.toISOString(), rangeEnd.toISOString()];
+          })();
+
           const layout: PlotParams['layout'] = {
             title: {
               text: series.series_name || `Series ${series.series_id}`,
@@ -612,9 +633,12 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               showgrid: true,
               type: 'date',
               domain: [0, 0.82],
+              range: defaultXRange,
+              rangeslider: { visible: true },
             },
             yaxis: {
               title: { text: 'Value' },
+              autorange: true,
               showgrid: true,
             },
             hovermode: 'closest',
@@ -632,6 +656,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             },
             autosize: true,
             margin: { l: 60, r: 20, t: 60, b: 50 },
+            uirevision: "static"
           };
 
           const isExpanded = expandedSeries.has(series.series_id);
@@ -681,13 +706,14 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                       </button>
                     </div>
                   )}
-                  <Plot
-                    data={plotData}
-                    layout={layout}
-                    config={config}
-                    style={{ width: '100%', height: '400px' }}
-                    useResizeHandler
-                  />
+                  {series.contextData.length > 0 && (
+                    <Plot
+                      data={plotData}
+                      layout={layout}
+                      style={{ width: '100%', height: '400px' }}
+                      useResizeHandler
+                    />
+                  )}
                 </div>
               )}
             </div>
