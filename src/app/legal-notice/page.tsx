@@ -2,13 +2,13 @@
 
 import Breadcrumbs from '@/src/components/Breadcrumbs';
 
-export default function ImpressumPage() {
+export default function LegalNoticePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Breadcrumbs
           items={[
-            { label: 'Legal Notice', href: '/impressum' },
+            { label: 'Legal Notice', href: '/legal-notice' },
           ]}
         />
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8">
@@ -19,7 +19,7 @@ export default function ImpressumPage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-3">Responsible for Content</h2>
               <div className="flex flex-col sm:flex-row gap-6 items-start justify-between">
                 <p>
-                  Oliver Müller <br />
+                  Prof. Dr. Oliver Müller <br />
                   Data Analytics Group<br />
                   Universität Paderborn<br />
                   Warburger Str. 100<br />
