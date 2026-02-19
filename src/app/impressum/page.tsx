@@ -8,23 +8,23 @@ export default function ImpressumPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Breadcrumbs
           items={[
-            { label: 'Impressum', href: '/impressum' },
+            { label: 'Legal Notice', href: '/impressum' },
           ]}
         />
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Impressum</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Legal Notice</h1>
           
           <div className="space-y-6 text-gray-700">
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">Verantwortlich für den Inhalt</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-3">Responsible for Content</h2>
               <div className="flex flex-col sm:flex-row gap-6 items-start justify-between">
                 <p>
-                  Marcel Meyer <br />
+                  Oliver Müller <br />
                   Data Analytics Group<br />
                   Universität Paderborn<br />
                   Warburger Str. 100<br />
                   33098 Paderborn<br />
-                  Deutschland
+                  Germany
                 </p>
                 <div className="flex-shrink-0 sm:ml-auto">
                   <a 
@@ -44,28 +44,27 @@ export default function ImpressumPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">Kontakt</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-3">Contact</h2>
               <p>
-                E-Mail: <a href="mailto:DataAnalytics@wiwi.uni-paderborn.de" className="text-blue-600 hover:text-blue-800 underline">DataAnalytics@wiwi.uni-paderborn.de</a><br />
-                Webseite: <a href="https://go.upb.de/data-analytics" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">https://go.upb.de/data-analytics</a>
+                Email: <a href="mailto:DataAnalytics@wiwi.uni-paderborn.de" className="text-blue-600 hover:text-blue-800 underline">DataAnalytics@wiwi.uni-paderborn.de</a><br />
+                Website: <a href="https://go.upb.de/data-analytics" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">https://go.upb.de/data-analytics</a>
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">Urheberrechtshinweis</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-3">Copyright Notice</h2>
               <p className="leading-relaxed">
-                Die Urheber- und Nutzungsrechte (Copyright) für Texte, Grafiken, Bilder, Design und Quellcode liegen soweit nicht 
-                anders angegeben bei der Universität Paderborn. Die Erstellung, Verwendung und Weitergabe von Kopien in 
-                elektronischer oder ausgedruckter Form bedarf der Genehmigung.
+                The copyright and usage rights for texts, graphics, images, design and source code lie, unless otherwise stated, 
+                with Paderborn University. The creation, use and distribution of copies in electronic or printed form requires permission.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">Haftungshinweis</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-3">Liability Notice</h2>
               <p className="leading-relaxed">
-                Für auf den Seiten vorhandene externe Links und die darüber verfügbaren Inhalte übernehmen wir keine Haftung. 
-                Sie stellen kein Angebot der Universität Paderborn dar. Für den Inhalt der verlinkten Seiten sind ausschließlich 
-                deren Betreiber verantwortlich.
+                We assume no liability for external links on the pages and the content available via them. 
+                They do not constitute an offer from Paderborn University. The operators of the linked pages are solely responsible 
+                for their content.
               </p>
             </section>
           </div>
