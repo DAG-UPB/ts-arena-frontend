@@ -55,17 +55,14 @@ export default function ImpressumPage() {
             <section>
               <h2 className="text-xl font-semibold text-gray-900 mb-3">Urheberrechtshinweis</h2>
               <p className="leading-relaxed">
-                Die Urheber- und Nutzungsrechte an Texten, Grafiken, Bildern, Design und Quellcode liegen, sofern nicht anders angegeben, 
-                bei der Universität Paderborn. Das Erstellen, Nutzen und Verbreiten von Kopien in elektronischer oder gedruckter Form bedarf der Genehmigung.
+                Die Urheber- und Nutzungsrechte (Copyright) für Texte, Grafiken, Bilder, Design und Quellcode liegen soweit nicht anders angegeben bei der Universität Paderborn. Die Erstellung, Verwendung und Weitergabe von Kopien in elektronischer oder ausgedruckter Form bedarf der Genehmigung.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-gray-900 mb-3">Haftungshinweis</h2>
               <p className="leading-relaxed">
-                Wir übernehmen keine Haftung für externe Links auf den Seiten und die darüber verfügbaren Inhalte. 
-                Sie stellen kein Angebot der Universität Paderborn dar. Die Betreiber der verlinkten Seiten sind allein 
-                für deren Inhalte verantwortlich.
+                Für auf den Seiten vorhandene externe Links und die darüber verfügbaren Inhalte übernehmen wir keine Haftung. Sie stellen kein Angebot der Universität Paderborn dar. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber verantwortlich.
               </p>
             </section>
           </div>
