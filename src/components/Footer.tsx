@@ -14,10 +14,10 @@ export default function Footer() {
           </div>
           <div className="flex space-x-6">
             <Link
-              href="/legal-notice"
+              href="/impressum"
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
-              Legal Notice
+              Impressum/Legal Notice
             </Link>
           </div>
         </div>
