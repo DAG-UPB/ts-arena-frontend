@@ -228,10 +228,11 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
 
     const layout: Partial<PlotParams['layout']> = {
       title: { text: data.data.series_name },
-      xaxis: { 
+      xaxis: {
         title: { text: 'Time' },
         type: 'date',
         range: xAxisRange,
+        rangeslider: { visible: true },
       },
       yaxis: { 
         title: { text: 'Value' },
