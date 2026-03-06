@@ -520,7 +520,21 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
           // Prepare traces for context and test data
           const traces: any[] = [];
           
-          // Context data trace (solid colored line)
+          // Ground truth trace (solid black line) — pushed first so it renders behind all other traces
+          if (series.testData && series.testData.length > 0) {
+            traces.push({
+              x: series.testData.map((d: any) => d.ts),
+              y: series.testData.map((d: any) => d.value),
+              type: 'scatter',
+              mode: 'lines',
+              name: `Live ${series.series_name || series.series_id}`,
+              line: { width: 2, color: '#000000', dash: 'solid' },
+              legendgroup: 'actual',
+              legendgrouptitle: { text: 'Observations' },
+            });
+          }
+
+          // Context data trace (solid blue line)
           if (series.contextData && series.contextData.length > 0) {
             traces.push({
               x: series.contextData.map((d: any) => d.ts),
@@ -530,20 +544,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               name: 'Historical Data',
               line: { width: 2, color: '#2563eb' },
               marker: { size: 4 },
-              legendgroup: 'actual',
-              legendgrouptitle: { text: 'Observations' },
-            });
-          }
-          
-          // Test data trace (grey dotted line)
-          if (series.testData && series.testData.length > 0) {
-            traces.push({
-              x: series.testData.map((d: any) => d.ts),
-              y: series.testData.map((d: any) => d.value),
-              type: 'scatter',
-              mode: 'lines',
-              name: `Live ${series.series_name || series.series_id}`,
-              line: { width: 2, color: '#000000', dash: 'solid' },
               legendgroup: 'actual',
             });
           }
