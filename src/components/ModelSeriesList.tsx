@@ -227,7 +227,6 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
     });
 
     const layout: Partial<PlotParams['layout']> = {
-      title: { text: data.data.series_name },
       xaxis: {
         title: { text: '' },
         type: 'date',

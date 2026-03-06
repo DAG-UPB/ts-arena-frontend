@@ -626,10 +626,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
           })();
 
           const layout: PlotParams['layout'] = {
-            title: {
-              text: series.series_name || `Series ${series.series_id}`,
-              font: { size: 16 },
-            },
             xaxis: {
               title: { text: '' },
               showgrid: true,
