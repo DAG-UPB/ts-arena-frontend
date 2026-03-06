@@ -531,7 +531,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               line: { width: 2, color: '#2563eb' },
               marker: { size: 4 },
               legendgroup: 'actual',
-              legendgrouptitle: { text: 'Actual Data' },
+              legendgrouptitle: { text: 'Observations' },
             });
           }
           
@@ -542,7 +542,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               y: series.testData.map((d: any) => d.value),
               type: 'scatter',
               mode: 'lines',
-              name: `Actual ${series.series_name || series.series_id}`,
+              name: `Live ${series.series_name || series.series_id}`,
               line: { width: 2, color: '#6b7280', dash: 'dot' },
               legendgroup: 'actual',
             });
@@ -600,6 +600,8 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   name: displayName,
                   line: { width: 2, dash: 'dash', color: colors[idx % colors.length] },
                   visible: isVisible ? true : 'legendonly',
+                  legendgroup: 'forecasts',
+                  legendgrouptitle: idx === 0 ? { text: 'Forecasts' } : undefined,
                 });
               }
             });
