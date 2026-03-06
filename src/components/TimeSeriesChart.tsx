@@ -543,7 +543,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               type: 'scatter',
               mode: 'lines',
               name: `Live ${series.series_name || series.series_id}`,
-              line: { width: 2, color: '#6b7280', dash: 'dot' },
+              line: { width: 2, color: '#000000', dash: 'solid' },
               legendgroup: 'actual',
             });
           }
