@@ -54,6 +54,7 @@ interface SeriesDataItem {
   testData: any[];
   series_id: number;
   series_name: string;
+  unit?: string | null;
   forecasts?: ForecastsResponse;
   forecastsLoading?: boolean;
   forecastsError?: string;
@@ -135,14 +136,15 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
       console.log(`✓ Loaded ${modelCount} forecast models for series ${seriesId}`);
       
       // Update with loaded data and forecasts
-      setSeriesData(prev => prev.map(s => 
-        s.series_id === seriesId 
-          ? { 
-              ...s, 
+      setSeriesData(prev => prev.map(s =>
+        s.series_id === seriesId
+          ? {
+              ...s,
               contextData: dataContext.data,
               testData: dataTest.data,
-              forecasts, 
-              forecastsLoading: false 
+              unit: currentSeries.unit,
+              forecasts,
+              forecastsLoading: false
             }
           : s
       ));
@@ -629,7 +631,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               font: { size: 16 },
             },
             xaxis: {
-              title: { text: 'Time' },
+              title: { text: '' },
               showgrid: true,
               type: 'date',
               domain: [0, 0.82],
@@ -637,7 +639,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               rangeslider: { visible: true },
             },
             yaxis: {
-              title: { text: 'Value' },
+              title: { text: series.unit ?? '' },
               autorange: true,
               showgrid: true,
             },
