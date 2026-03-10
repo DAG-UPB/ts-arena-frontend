@@ -13,6 +13,16 @@ import { parse, toSeconds } from 'iso8601-duration';
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
+// Convert ISO 8601 duration to milliseconds
+function durationToMs(isoStr: string | undefined): number | null {
+  if (!isoStr) return null;
+  try {
+    return toSeconds(parse(isoStr)) * 1000;
+  } catch {
+    return null;
+  }
+}
+
 // Convert ISO 8601 duration to human-readable format
 function formatFrequency(freq: string | undefined): string {
   if (!freq) return 'N/A';
@@ -44,6 +54,7 @@ interface SeriesDataItem {
   testData: any[];
   series_id: number;
   series_name: string;
+  unit?: string | null;
   forecasts?: ForecastsResponse;
   forecastsLoading?: boolean;
   forecastsError?: string;
@@ -68,7 +79,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedSeries, setExpandedSeries] = useState<Set<number>>(new Set());
-  
+
   // Forecast filter state
   const [maxSizeFilter, setMaxSizeFilter] = useState<string>('');
   const [architectureFilter, setArchitectureFilter] = useState<string>('');
@@ -125,14 +136,15 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
       console.log(`✓ Loaded ${modelCount} forecast models for series ${seriesId}`);
       
       // Update with loaded data and forecasts
-      setSeriesData(prev => prev.map(s => 
-        s.series_id === seriesId 
-          ? { 
-              ...s, 
+      setSeriesData(prev => prev.map(s =>
+        s.series_id === seriesId
+          ? {
+              ...s,
               contextData: dataContext.data,
               testData: dataTest.data,
-              forecasts, 
-              forecastsLoading: false 
+              unit: currentSeries.unit,
+              forecasts,
+              forecastsLoading: false
             }
           : s
       ));
@@ -328,13 +340,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
 
   const filterOptions = getFilterOptions();
 
-  const config: PlotParams['config'] = {
-    responsive: true,
-    displayModeBar: true,
-    displaylogo: false,
-    modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-  };
-
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="mb-6">
@@ -515,7 +520,21 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
           // Prepare traces for context and test data
           const traces: any[] = [];
           
-          // Context data trace (solid colored line)
+          // Ground truth trace (solid black line) — pushed first so it renders behind all other traces
+          if (series.testData && series.testData.length > 0) {
+            traces.push({
+              x: series.testData.map((d: any) => d.ts),
+              y: series.testData.map((d: any) => d.value),
+              type: 'scatter',
+              mode: 'lines',
+              name: `Live ${series.series_name || series.series_id}`,
+              line: { width: 2, color: '#000000', dash: 'solid' },
+              legendgroup: 'actual',
+              legendgrouptitle: { text: 'Observations' },
+            });
+          }
+
+          // Context data trace (solid blue line)
           if (series.contextData && series.contextData.length > 0) {
             traces.push({
               x: series.contextData.map((d: any) => d.ts),
@@ -525,20 +544,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               name: 'Historical Data',
               line: { width: 2, color: '#2563eb' },
               marker: { size: 4 },
-              legendgroup: 'actual',
-              legendgrouptitle: { text: 'Actual Data' },
-            });
-          }
-          
-          // Test data trace (grey dotted line)
-          if (series.testData && series.testData.length > 0) {
-            traces.push({
-              x: series.testData.map((d: any) => d.ts),
-              y: series.testData.map((d: any) => d.value),
-              type: 'scatter',
-              mode: 'lines',
-              name: `Actual ${series.series_name || series.series_id}`,
-              line: { width: 2, color: '#6b7280', dash: 'dot' },
               legendgroup: 'actual',
             });
           }
@@ -595,6 +600,8 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   name: displayName,
                   line: { width: 2, dash: 'dash', color: colors[idx % colors.length] },
                   visible: isVisible ? true : 'legendonly',
+                  legendgroup: 'forecasts',
+                  legendgrouptitle: idx === 0 ? { text: 'Forecasts' } : undefined,
                 });
               }
             });
@@ -602,19 +609,36 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
 
           const plotData: PlotParams['data'] = traces;
 
+          // Compute default zoom: show last 3× horizon of context + full forecast window.
+          const defaultXRange: [string, string] | undefined = (() => {
+            const horizonMs = durationToMs(horizon);
+
+            if (!horizonMs || !series.contextData?.length) {
+              return undefined;
+            }
+
+            const contextEnd = new Date(
+              series.contextData[series.contextData.length - 1].ts
+            );
+
+            const rangeStart = new Date(contextEnd.getTime() - 3 * horizonMs);
+            const rangeEnd = new Date(contextEnd.getTime() + 1.1 * horizonMs);
+
+            return [rangeStart.toISOString(), rangeEnd.toISOString()];
+          })();
+
           const layout: PlotParams['layout'] = {
-            title: {
-              text: series.series_name || `Series ${series.series_id}`,
-              font: { size: 16 },
-            },
             xaxis: {
-              title: { text: 'Time' },
+              title: { text: '' },
               showgrid: true,
               type: 'date',
               domain: [0, 0.82],
+              range: defaultXRange,
+              rangeslider: { visible: true },
             },
             yaxis: {
-              title: { text: 'Value' },
+              title: { text: series.unit ?? '' },
+              autorange: true,
               showgrid: true,
             },
             hovermode: 'closest',
@@ -632,6 +656,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             },
             autosize: true,
             margin: { l: 60, r: 20, t: 60, b: 50 },
+            uirevision: "static"
           };
 
           const isExpanded = expandedSeries.has(series.series_id);
@@ -681,13 +706,14 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                       </button>
                     </div>
                   )}
-                  <Plot
-                    data={plotData}
-                    layout={layout}
-                    config={config}
-                    style={{ width: '100%', height: '400px' }}
-                    useResizeHandler
-                  />
+                  {series.contextData.length > 0 && (
+                    <Plot
+                      data={plotData}
+                      layout={layout}
+                      style={{ width: '100%', height: '400px' }}
+                      useResizeHandler
+                    />
+                  )}
                 </div>
               )}
             </div>

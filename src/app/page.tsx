@@ -219,6 +219,7 @@ export default function Home() {
               startDate={oldestActiveRound.start_time}
               endDate={oldestActiveRound.end_time}
               frequency={oldestActiveRound.frequency}
+              horizon={oldestActiveRound.horizon}
               seriesId={SERIES_ID}
               on_title_page={true}
               definitionId={DEFINITION_ID}
