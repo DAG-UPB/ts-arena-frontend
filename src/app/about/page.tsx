@@ -38,9 +38,7 @@ export default function AboutPage() {
             leakage, since the evaluation target physically does not exist at submission time. The platform
             continuously collects forecasts from models across 186 energy-sector time series in 14 challenge
             definitions, scores them with MASE, and ranks them using an ELO rating system with confidence
-            intervals. Backtest results from 2025 show that modern foundation models substantially outperform
-            statistical baselines, with Chronos-2 and TiRex leading the overall ranking, and that model size
-            generally correlates with performance.
+            intervals.
           </div>
 
           <a
@@ -113,7 +111,27 @@ export default function AboutPage() {
             >
               Data Analytics Group
             </a>{' '}
-            at Paderborn University, Germany.
+            at Paderborn University, Germany. Learn more on the{' '}
+            <a
+              href="https://wiwi.uni-paderborn.de/en/dep3/mueller"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              team page
+            </a>
+            .
+          </p>
+          <p className="text-gray-700 text-sm leading-relaxed mb-4">
+            We are open to collaboration, for example to integrate additional live time series into
+            TS-Arena. If you are interested, please contact us at{' '}
+            <a
+              href="mailto:DataAnalytics@wiwi.uni-paderborn.de"
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              DataAnalytics@wiwi.uni-paderborn.de
+            </a>
+            .
           </p>
           <div className="flex flex-wrap gap-2 text-sm text-gray-700">
             {['Marcel Meyer', 'Sascha Kaltenpoth', 'Henrik Albers', 'Kevin Zalipski', 'Prof. Dr. Oliver Müller'].map((name) => (
