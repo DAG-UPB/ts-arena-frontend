@@ -196,10 +196,13 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 p-8">
       <main className="max-w-7xl mx-auto">
         <Breadcrumbs items={[{ label: 'Rankings', href: '/' }]} />
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
             TS-Arena Model Rankings
           </h1>
+          <p className="mt-2 text-gray-600">
+            Live ELO-based rankings of Time Series Foundation Models, updated continuously from ongoing forecast challenges.
+          </p>
         </div>
 
         {/* Time Series Chart Section */}
@@ -233,7 +236,7 @@ export default function Home() {
 
         {/* Overall Ranking (Full Table) */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-1">
             <h2 className="text-2xl font-semibold text-gray-900">Overall Ranking</h2>
             
             {/* Calculation Month Filter */}
@@ -261,6 +264,9 @@ export default function Home() {
               </select>
             </div>
           </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Aggregated ELO scores across all challenge definitions and time series. Higher is better.
+          </p>
           <RankingTableElo rankings={rankingsData.overall} />
         </div>
 

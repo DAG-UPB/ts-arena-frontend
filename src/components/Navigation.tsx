@@ -11,6 +11,7 @@ export default function Navigation() {
     { href: '/', label: 'Rankings' },
     { href: '/challenges', label: 'Challenges' },
     { href: '/add-model', label: 'Add Model' },
+    { href: '/about', label: 'About' },
   ];
 
   return (
