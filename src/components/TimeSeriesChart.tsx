@@ -8,10 +8,19 @@ import type { ForecastsResponse, ForecastData, Model } from '@/src/types/challen
 import { getChallengeSeries, getSeriesData, getSeriesForecasts, getRoundModels } from '@/src/services/roundService';
 import humanizeDuration from 'humanize-duration';
 import { parse, toSeconds } from 'iso8601-duration';
+import wrap from 'word-wrap';
 
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+
+// Wrap a legend label: replace underscores with spaces and break at ~25 chars
+function wrapLegendLabel(label: string | undefined, width = 25): string {
+  if (!label) return '';
+  const spaced = label.replace(/_/g, ' ');
+
+  return wrap(spaced, { width, indent: '', trim: true, cut: false }).replace(/\n/g, '<br>');
+}
 
 // Convert ISO 8601 duration to milliseconds
 function durationToMs(isoStr: string | undefined): number | null {
@@ -527,7 +536,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               y: series.testData.map((d: any) => d.value),
               type: 'scatter',
               mode: 'lines',
-              name: `Live ${series.series_name || series.series_id}`,
+              name: wrapLegendLabel(`Live: ${series.series_name || series.series_id}`),
               line: { width: 2, color: '#000000', dash: 'solid' },
               legendgroup: 'actual',
               legendgrouptitle: { text: 'Observations' },
@@ -580,9 +589,11 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             modelEntries.forEach(({ modelName, forecastData, label, mase }, idx) => {
               const dataArray = forecastData?.data;
               if (Array.isArray(dataArray) && dataArray.length > 0 && lastActualPoint) {
-                const displayName = mase !== undefined && mase !== null 
-                  ? `${label} (MASE: ${typeof mase === 'number' ? mase.toFixed(3) : mase})`
-                  : label;
+                const displayName = wrapLegendLabel(
+                  mase !== undefined && mase !== null
+                    ? `${label} (MASE: ${typeof mase === 'number' ? mase.toFixed(3) : mase})`
+                    : label
+                );
                 
                 // Prepend the last actual point to connect the forecast line
                 const connectedX = [lastActualPoint.ts, ...dataArray.map((d: any) => d.ts)];
