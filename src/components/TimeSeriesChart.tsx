@@ -22,6 +22,20 @@ function wrapLegendLabel(label: string | undefined, width = 25): string {
   return wrap(spaced, { width, indent: '', trim: true, cut: false }).replace(/\n/g, '<br>');
 }
 
+// Convert a hex color to an rgba() string
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// CI bands to render: wider interval → lower alpha (more transparent)
+const CI_BANDS = [
+  { lower: 'q_0.2', upper: 'q_0.8', alpha: 0.12 },
+  { lower: 'q_0.3', upper: 'q_0.7', alpha: 0.22 },
+] as const;
+
 // Convert ISO 8601 duration to milliseconds
 function durationToMs(isoStr: string | undefined): number | null {
   if (!isoStr) return null;
@@ -594,24 +608,76 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                     ? `${label} (MASE: ${typeof mase === 'number' ? mase.toFixed(3) : mase})`
                     : label
                 );
-                
+
                 // Prepend the last actual point to connect the forecast line
                 const connectedX = [lastActualPoint.ts, ...dataArray.map((d: any) => d.ts)];
                 const connectedY = [lastActualPoint.value, ...dataArray.map((d: any) => d.y)];
-                
-                // Show only the best 5 forecasts by default
-                const isVisible = visibleForecastCount < 3;
+
+                // Show only the best 2 forecasts by default
+                const isVisible = visibleForecastCount < 2;
                 visibleForecastCount++;
-                
+
+                const color = colors[idx % colors.length];
+
+                console.log(`CI bounds for model "${modelName}":`, dataArray[0]?.ci ?? 'none');
+
+                // CI bands: push upper + lower (fill tonexty) pairs BEFORE the forecast
+                // line so the line renders on top. Each pair must be consecutive for
+                // fill: 'tonexty' to fill between them correctly.
+                CI_BANDS.forEach(({ lower, upper, alpha }) => {
+                  const hasCI = dataArray.some(
+                    (d: any) => d.ci?.[lower] !== undefined && d.ci?.[upper] !== undefined
+                  );
+                  if (!hasCI) return;
+
+                  const ciUpperY = [
+                    lastActualPoint.value,
+                    ...dataArray.map((d: any) => d.ci?.[upper] ?? d.y),
+                  ];
+                  const ciLowerY = [
+                    lastActualPoint.value,
+                    ...dataArray.map((d: any) => d.ci?.[lower] ?? d.y),
+                  ];
+
+                  // Upper bound (invisible line, no legend entry)
+                  traces.push({
+                    x: connectedX,
+                    y: ciUpperY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { width: 0, color: 'transparent' },
+                    showlegend: false,
+                    legendgroup: `forecast-${idx}`,
+                    visible: isVisible ? true : 'legendonly',
+                    hoverinfo: 'skip',
+                  });
+
+                  // Lower bound – fills to the upper bound trace above it
+                  traces.push({
+                    x: connectedX,
+                    y: ciLowerY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    fill: 'tonexty',
+                    fillcolor: hexToRgba(color, alpha),
+                    line: { width: 0, color: 'transparent' },
+                    showlegend: false,
+                    legendgroup: `forecast-${idx}`,
+                    visible: isVisible ? true : 'legendonly',
+                    hoverinfo: 'skip',
+                  });
+                });
+
+                // Forecast line rendered on top of CI bands
                 traces.push({
                   x: connectedX,
                   y: connectedY,
                   type: 'scatter',
                   mode: 'lines',
                   name: displayName,
-                  line: { width: 2, dash: 'dash', color: colors[idx % colors.length] },
+                  line: { width: 2, dash: 'dash', color },
                   visible: isVisible ? true : 'legendonly',
-                  legendgroup: 'forecasts',
+                  legendgroup: `forecast-${idx}`,
                   legendgrouptitle: idx === 0 ? { text: 'Forecasts' } : undefined,
                 });
               }
