@@ -25,6 +25,7 @@ export interface ChallengeSeries {
   description: string | null;
   frequency: string | null;
   horizon: any;
+  unit: string | null;
   endpoint_prefix: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -139,6 +140,7 @@ export interface ModelSeriesForecastsResponse {
   definition_name: string;
   series_id: number;
   series_name: string;
+  series_unit: string | null;
   rounds: ModelSeriesRound[];
   ground_truth?: GroundTruthPoint[];
 }

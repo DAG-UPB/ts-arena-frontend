@@ -8,10 +8,43 @@ import type { ForecastsResponse, ForecastData, Model } from '@/src/types/challen
 import { getChallengeSeries, getSeriesData, getSeriesForecasts, getRoundModels } from '@/src/services/roundService';
 import humanizeDuration from 'humanize-duration';
 import { parse, toSeconds } from 'iso8601-duration';
+import wrap from 'word-wrap';
 
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+
+// Wrap a legend label: replace underscores with spaces and break at ~25 chars
+function wrapLegendLabel(label: string | undefined, width = 25): string {
+  if (!label) return '';
+  const spaced = label.replace(/_/g, ' ');
+
+  return wrap(spaced, { width, indent: '', trim: true, cut: false }).replace(/\n/g, '<br>');
+}
+
+// Convert a hex color to an rgba() string
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// CI bands to render: wider interval → lower alpha (more transparent)
+const CI_BANDS = [
+  { lower: 'q_0.2', upper: 'q_0.8', alpha: 0.12 },
+  { lower: 'q_0.3', upper: 'q_0.7', alpha: 0.22 },
+] as const;
+
+// Convert ISO 8601 duration to milliseconds
+function durationToMs(isoStr: string | undefined): number | null {
+  if (!isoStr) return null;
+  try {
+    return toSeconds(parse(isoStr)) * 1000;
+  } catch {
+    return null;
+  }
+}
 
 // Convert ISO 8601 duration to human-readable format
 function formatFrequency(freq: string | undefined): string {
@@ -44,6 +77,7 @@ interface SeriesDataItem {
   testData: any[];
   series_id: number;
   series_name: string;
+  unit?: string | null;
   forecasts?: ForecastsResponse;
   forecastsLoading?: boolean;
   forecastsError?: string;
@@ -68,7 +102,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedSeries, setExpandedSeries] = useState<Set<number>>(new Set());
-  
+
   // Forecast filter state
   const [maxSizeFilter, setMaxSizeFilter] = useState<string>('');
   const [architectureFilter, setArchitectureFilter] = useState<string>('');
@@ -125,14 +159,15 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
       console.log(`✓ Loaded ${modelCount} forecast models for series ${seriesId}`);
       
       // Update with loaded data and forecasts
-      setSeriesData(prev => prev.map(s => 
-        s.series_id === seriesId 
-          ? { 
-              ...s, 
+      setSeriesData(prev => prev.map(s =>
+        s.series_id === seriesId
+          ? {
+              ...s,
               contextData: dataContext.data,
               testData: dataTest.data,
-              forecasts, 
-              forecastsLoading: false 
+              unit: currentSeries.unit,
+              forecasts,
+              forecastsLoading: false
             }
           : s
       ));
@@ -328,13 +363,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
 
   const filterOptions = getFilterOptions();
 
-  const config: PlotParams['config'] = {
-    responsive: true,
-    displayModeBar: true,
-    displaylogo: false,
-    modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-  };
-
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="mb-6">
@@ -515,7 +543,21 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
           // Prepare traces for context and test data
           const traces: any[] = [];
           
-          // Context data trace (solid colored line)
+          // Ground truth trace (solid black line) — pushed first so it renders behind all other traces
+          if (series.testData && series.testData.length > 0) {
+            traces.push({
+              x: series.testData.map((d: any) => d.ts),
+              y: series.testData.map((d: any) => d.value),
+              type: 'scatter',
+              mode: 'lines',
+              name: wrapLegendLabel(`Live: ${series.series_name || series.series_id}`),
+              line: { width: 2, color: '#000000', dash: 'solid' },
+              legendgroup: 'actual',
+              legendgrouptitle: { text: 'Observations' },
+            });
+          }
+
+          // Context data trace (solid blue line)
           if (series.contextData && series.contextData.length > 0) {
             traces.push({
               x: series.contextData.map((d: any) => d.ts),
@@ -525,20 +567,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               name: 'Historical Data',
               line: { width: 2, color: '#2563eb' },
               marker: { size: 4 },
-              legendgroup: 'actual',
-              legendgrouptitle: { text: 'Actual Data' },
-            });
-          }
-          
-          // Test data trace (grey dotted line)
-          if (series.testData && series.testData.length > 0) {
-            traces.push({
-              x: series.testData.map((d: any) => d.ts),
-              y: series.testData.map((d: any) => d.value),
-              type: 'scatter',
-              mode: 'lines',
-              name: `Actual ${series.series_name || series.series_id}`,
-              line: { width: 2, color: '#6b7280', dash: 'dot' },
               legendgroup: 'actual',
             });
           }
@@ -575,26 +603,82 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             modelEntries.forEach(({ modelName, forecastData, label, mase }, idx) => {
               const dataArray = forecastData?.data;
               if (Array.isArray(dataArray) && dataArray.length > 0 && lastActualPoint) {
-                const displayName = mase !== undefined && mase !== null 
-                  ? `${label} (MASE: ${typeof mase === 'number' ? mase.toFixed(3) : mase})`
-                  : label;
-                
+                const displayName = wrapLegendLabel(
+                  mase !== undefined && mase !== null
+                    ? `${label} (MASE: ${typeof mase === 'number' ? mase.toFixed(3) : mase})`
+                    : label
+                );
+
                 // Prepend the last actual point to connect the forecast line
                 const connectedX = [lastActualPoint.ts, ...dataArray.map((d: any) => d.ts)];
                 const connectedY = [lastActualPoint.value, ...dataArray.map((d: any) => d.y)];
-                
-                // Show only the best 5 forecasts by default
-                const isVisible = visibleForecastCount < 3;
+
+                // Show only the best 2 forecasts by default
+                const isVisible = visibleForecastCount < 2;
                 visibleForecastCount++;
-                
+
+                const color = colors[idx % colors.length];
+
+                console.log(`CI bounds for model "${modelName}":`, dataArray[0]?.ci ?? 'none');
+
+                // CI bands: push upper + lower (fill tonexty) pairs BEFORE the forecast
+                // line so the line renders on top. Each pair must be consecutive for
+                // fill: 'tonexty' to fill between them correctly.
+                CI_BANDS.forEach(({ lower, upper, alpha }) => {
+                  const hasCI = dataArray.some(
+                    (d: any) => d.ci?.[lower] !== undefined && d.ci?.[upper] !== undefined
+                  );
+                  if (!hasCI) return;
+
+                  const ciUpperY = [
+                    lastActualPoint.value,
+                    ...dataArray.map((d: any) => d.ci?.[upper] ?? d.y),
+                  ];
+                  const ciLowerY = [
+                    lastActualPoint.value,
+                    ...dataArray.map((d: any) => d.ci?.[lower] ?? d.y),
+                  ];
+
+                  // Upper bound (invisible line, no legend entry)
+                  traces.push({
+                    x: connectedX,
+                    y: ciUpperY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { width: 0, color: 'transparent' },
+                    showlegend: false,
+                    legendgroup: `forecast-${idx}`,
+                    visible: isVisible ? true : 'legendonly',
+                    hoverinfo: 'skip',
+                  });
+
+                  // Lower bound – fills to the upper bound trace above it
+                  traces.push({
+                    x: connectedX,
+                    y: ciLowerY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    fill: 'tonexty',
+                    fillcolor: hexToRgba(color, alpha),
+                    line: { width: 0, color: 'transparent' },
+                    showlegend: false,
+                    legendgroup: `forecast-${idx}`,
+                    visible: isVisible ? true : 'legendonly',
+                    hoverinfo: 'skip',
+                  });
+                });
+
+                // Forecast line rendered on top of CI bands
                 traces.push({
                   x: connectedX,
                   y: connectedY,
                   type: 'scatter',
                   mode: 'lines',
                   name: displayName,
-                  line: { width: 2, dash: 'dash', color: colors[idx % colors.length] },
+                  line: { width: 2, dash: 'dash', color },
                   visible: isVisible ? true : 'legendonly',
+                  legendgroup: `forecast-${idx}`,
+                  legendgrouptitle: idx === 0 ? { text: 'Forecasts' } : undefined,
                 });
               }
             });
@@ -602,19 +686,36 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
 
           const plotData: PlotParams['data'] = traces;
 
+          // Compute default zoom: show last 3× horizon of context + full forecast window.
+          const defaultXRange: [string, string] | undefined = (() => {
+            const horizonMs = durationToMs(horizon);
+
+            if (!horizonMs || !series.contextData?.length) {
+              return undefined;
+            }
+
+            const contextEnd = new Date(
+              series.contextData[series.contextData.length - 1].ts
+            );
+
+            const rangeStart = new Date(contextEnd.getTime() - 3 * horizonMs);
+            const rangeEnd = new Date(contextEnd.getTime() + 1.1 * horizonMs);
+
+            return [rangeStart.toISOString(), rangeEnd.toISOString()];
+          })();
+
           const layout: PlotParams['layout'] = {
-            title: {
-              text: series.series_name || `Series ${series.series_id}`,
-              font: { size: 16 },
-            },
             xaxis: {
-              title: { text: 'Time' },
+              title: { text: '' },
               showgrid: true,
               type: 'date',
               domain: [0, 0.82],
+              range: defaultXRange,
+              rangeslider: { visible: true },
             },
             yaxis: {
-              title: { text: 'Value' },
+              title: { text: series.unit ?? '' },
+              autorange: true,
               showgrid: true,
             },
             hovermode: 'closest',
@@ -632,6 +733,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             },
             autosize: true,
             margin: { l: 60, r: 20, t: 60, b: 50 },
+            uirevision: "static"
           };
 
           const isExpanded = expandedSeries.has(series.series_id);
@@ -681,13 +783,14 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                       </button>
                     </div>
                   )}
-                  <Plot
-                    data={plotData}
-                    layout={layout}
-                    config={config}
-                    style={{ width: '100%', height: '400px' }}
-                    useResizeHandler
-                  />
+                  {series.contextData.length > 0 && (
+                    <Plot
+                      data={plotData}
+                      layout={layout}
+                      style={{ width: '100%', height: '400px' }}
+                      useResizeHandler
+                    />
+                  )}
                 </div>
               )}
             </div>
