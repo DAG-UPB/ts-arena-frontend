@@ -26,7 +26,7 @@ export default function AboutPage() {
               TS-Arena: A Live Forecast Pre-Registration Platform
             </h3>
             <p className="text-sm text-gray-500">
-              Marcel Meyer, Sascha Kaltenpoth, Henrik Albers, Kevin Zalipski, Oliver Müller &mdash; Paderborn University, Data Analytics Group
+              Marcel Meyer, Sascha Kaltenpoth, Henrik Albers, Kevin Zalipski, Oliver Müller &mdash; Paderborn University, Data Analytics Group, 2026
             </p>
           </div>
 
@@ -43,6 +43,37 @@ export default function AboutPage() {
 
           <a
             href="https://arxiv.org/abs/2512.20761"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+          >
+            <BookOpen className="w-4 h-4" />
+            Read on arXiv
+          </a>
+        </div>
+
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <BookOpen className="w-6 h-6 text-blue-600 flex-shrink-0" />
+            <h2 className="text-xl font-semibold text-gray-900">2025 Technical Report</h2>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-1">
+              TS-Arena Technical Report -- A Pre-registered Live Forecasting Platform
+            </h3>
+            <p className="text-sm text-gray-500">
+              Marcel Meyer, Sascha Kaltenpoth, Kevin Zalipski, Henrik Albers, Oliver Müller &mdash; Paderborn University, Data Analytics Group, 2025
+            </p>
+          </div>
+
+          <div className="bg-gray-50 rounded-md p-4 mb-5 text-sm text-gray-700 leading-relaxed border border-gray-200">
+            <span className="font-semibold text-gray-800">Abstract. </span>
+            While Time Series Foundation Models (TSFMs) offer transformative capabilities for forecasting, they simultaneously risk triggering a fundamental evaluation crisis. This crisis is driven by information leakage due to overlapping training and test sets across different models, as well as the illegitimate transfer of global patterns to test data. While the ability to learn shared temporal dynamics represents a primary strength of these models, their evaluation on historical archives often permits the exploitation of observed global shocks, which violates the independence required for valid benchmarking. We introduce TS-Arena, a platform that restores the operational integrity of forecasting by treating the genuinely unknown future as the definitive test environment. By implementing a pre-registration mechanism on live data streams, the platform ensures that evaluation targets remain physically non-existent during inference, thereby enforcing a strict global temporal split. This methodology establishes a moving temporal frontier that prevents historical contamination and provides an authentic assessment of model generalization. Initially applied within the energy sector, TS-Arena provides a sustainable infrastructure for comparing foundation models under real-world constraints. A prototype of the platform is available at this https URL. 
+          </div>
+
+          <a
+            href="https://arxiv.org/abs/2512.20761v1"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
