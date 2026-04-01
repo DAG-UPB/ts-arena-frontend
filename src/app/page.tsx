@@ -267,7 +267,7 @@ export default function Home() {
             </div>
           </div>
           <p className="text-sm text-gray-600 mb-4">
-            Aggregated scores across all challenge definitions and time series. Higher is better. Updated multiple times a day.
+            Aggregated scores across all challenge definitions and time series. ELO: higher is better. MASE: lower is better. Updated multiple times a day.
           </p>
           <RankingTableElo rankings={rankingsData.overall} />
         </div>
