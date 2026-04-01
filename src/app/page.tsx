@@ -244,10 +244,12 @@ export default function Home() {
               <label className="text-xs text-gray-500">Period</label>
               <div className="relative group">
                 <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                <div className="absolute right-0 top-6 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div className="absolute right-0 top-6 w-72 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                   <div className="font-medium mb-1">Calculation Period</div>
-                  <div className="text-gray-200">
-                    Select a month to view the ranking calculated at the end of that period. "Recent" shows the most current ranking.
+                  <div className="text-gray-200 space-y-1">
+                    <p>Forecasts are evaluated hourly as new ground truth data arrives.</p>
+                    <p>Historical standings are aggregated and reported once per month. Select a month to view the ranking snapshot from the end of that period.</p>
+                    <p>&ldquo;Recent&rdquo; shows the most current ranking, including hourly evaluations not yet reported in a monthly snapshot.</p>
                   </div>
                 </div>
               </div>
