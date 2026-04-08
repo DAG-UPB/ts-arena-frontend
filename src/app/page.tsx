@@ -8,8 +8,8 @@ import TimeSeriesChart from '@/src/components/TimeSeriesChart';
 import { getFilteredRankings, getRankingFilters, ModelRanking, FilterOptions, ChallengeDefinition } from '@/src/services/modelService';
 import { getDefinitionRounds } from '@/src/services/definitionService';
 
-const DEFINITION_ID = 225;
-const SERIES_ID = 1373;
+const DEFINITION_ID:number = parseInt(process.env.NEXT_PUBLIC_DEFINITION_ID || '225');
+const SERIES_ID:number = parseInt(process.env.NEXT_PUBLIC_SERIES_ID || '1373');
 
 interface RankingsData {
   overall: ModelRanking[];
