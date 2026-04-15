@@ -102,7 +102,7 @@ export default function ModelDetailPage() {
         <div className="bg-white rounded-lg shadow-md p-8 mb-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">Ranking Performance Over Time</h2>
           <p className="text-sm text-gray-600 mb-6">
-            Monthly ELO score evolution across all challenges, individual challenge definitions, and frequency/horizon combinations.
+            ELO score evolution across all challenges, individual challenge definitions, and frequency/horizon combinations. Forecasts are evaluated hourly; standings shown here are aggregated and reported monthly.
           </p>
           {loading ? (
             <div className="text-center">

@@ -182,7 +182,7 @@ export default function Home() {
         <main className="max-w-7xl mx-auto">
           <Breadcrumbs items={[{ label: 'Rankings', href: '/' }]} />
           <h1 className="text-3xl font-bold text-gray-900 mb-8">
-            TS-Arena Model Rankings
+            TS-Arena – Live Time-Series Forecasting Benchmark
           </h1>
           <div className="text-center py-12">
             <div className="text-lg text-gray-600">Loading ranking...</div>
@@ -198,10 +198,10 @@ export default function Home() {
         <Breadcrumbs items={[{ label: 'Rankings', href: '/' }]} />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            TS-Arena Model Rankings
+            TS-Arena – Live Time-Series Forecasting Benchmark
           </h1>
           <p className="mt-2 text-gray-600">
-            Live ELO-based rankings of Time Series Foundation Models, updated continuously from ongoing forecast challenges.
+            Forecasting models compete in multiple real-time forecasting challenges per day on live real data. Rankings update multiple times daily.
           </p>
         </div>
 
@@ -244,10 +244,12 @@ export default function Home() {
               <label className="text-xs text-gray-500">Period</label>
               <div className="relative group">
                 <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                <div className="absolute right-0 top-6 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div className="absolute right-0 top-6 w-72 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                   <div className="font-medium mb-1">Calculation Period</div>
-                  <div className="text-gray-200">
-                    Select a month to view the ranking calculated at the end of that period. "Recent" shows the most current ranking.
+                  <div className="text-gray-200 space-y-1">
+                    <p>Rankings are recalculated multiple times a day as new ground truth data arrives.</p>
+                    <p>Historical standings are snapshotted once per month. Select a month to view that period&apos;s snapshot.</p>
+                    <p>&ldquo;Recent&rdquo; shows today&apos;s current ranking.</p>
                   </div>
                 </div>
               </div>
@@ -265,7 +267,7 @@ export default function Home() {
             </div>
           </div>
           <p className="text-sm text-gray-600 mb-4">
-            Aggregated ELO scores across all challenge definitions and time series. Higher is better.
+            Aggregated scores across all challenge definitions and time series. ELO: higher is better. MASE: lower is better. Updated multiple times a day.
           </p>
           <RankingTableElo rankings={rankingsData.overall} />
         </div>
