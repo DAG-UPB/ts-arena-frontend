@@ -1,5 +1,47 @@
+import Image from 'next/image';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
-import { BookOpen, Users, FlaskConical, BarChart3 } from 'lucide-react';
+import { BookOpen, Users, FlaskConical, BarChart3, Linkedin, GraduationCap } from 'lucide-react';
+
+type TeamMember = {
+  name: string;
+  role?: string;
+  photo: string;
+  linkedin?: string;
+  university: string;
+};
+
+const TEAM: TeamMember[] = [
+  {
+    name: 'Marcel Meyer',
+    photo: '/team/marcel.png',
+    linkedin: 'https://www.linkedin.com/in/profil-marcel-meyer/',
+    university: 'https://www.uni-paderborn.de/person/105120',
+  },
+  {
+    name: 'Sascha Kaltenpoth',
+    photo: '/team/sascha.png',
+    linkedin: 'https://www.linkedin.com/in/sascha-kaltenpoth-727123214/',
+    university: 'https://www.uni-paderborn.de/person/50640',
+  },
+  {
+    name: 'Henrik Albers',
+    photo: '/team/henrik.png',
+    linkedin: 'https://www.linkedin.com/in/henrik-albers/',
+    university: 'https://www.uni-paderborn.de/person/57403',
+  },
+  {
+    name: 'Kevin Zalipski',
+    photo: '/team/kevin.png',
+    university: 'https://www.uni-paderborn.de/person/62222',
+  },
+  {
+    name: 'Prof. Dr. Oliver Müller',
+    role: 'Head of Data Analytics Group',
+    photo: '/team/oliver.png',
+    linkedin: 'https://www.linkedin.com/in/oliver-m%C3%BCller-5ba83240/',
+    university: 'https://www.uni-paderborn.de/person/72849',
+  },
+];
 
 export default function AboutPage() {
   return (
@@ -126,11 +168,11 @@ export default function AboutPage() {
           </p>
         </div>
 
-        {/* Team */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8">
+        {/* Contact */}
+        <div id="contact" className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8 scroll-mt-24">
           <div className="flex items-center gap-3 mb-4">
             <Users className="w-6 h-6 text-blue-600 flex-shrink-0" />
-            <h2 className="text-xl font-semibold text-gray-900">Team</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Contact</h2>
           </div>
           <p className="text-gray-700 text-sm leading-relaxed mb-4">
             TS-Arena is developed by the{' '}
@@ -142,20 +184,9 @@ export default function AboutPage() {
             >
               Data Analytics Group
             </a>{' '}
-            at Paderborn University, Germany. Learn more on the{' '}
-            <a
-              href="https://wiwi.uni-paderborn.de/en/dep3/mueller"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 underline"
-            >
-              team page
-            </a>
-            .
-          </p>
-          <p className="text-gray-700 text-sm leading-relaxed mb-4">
-            We are open to collaboration, for example to integrate additional live time series into
-            TS-Arena. If you are interested, please contact us at{' '}
+            at Paderborn University, Germany. We are open to collaboration, for example to integrate
+            additional live time series into TS-Arena. Feel free to reach out to any of us directly
+            or write to{' '}
             <a
               href="mailto:DataAnalytics@wiwi.uni-paderborn.de"
               className="text-blue-600 hover:text-blue-800 underline"
@@ -164,9 +195,49 @@ export default function AboutPage() {
             </a>
             .
           </p>
-          <div className="flex flex-wrap gap-2 text-sm text-gray-700">
-            {['Marcel Meyer', 'Sascha Kaltenpoth', 'Henrik Albers', 'Kevin Zalipski', 'Prof. Dr. Oliver Müller'].map((name) => (
-              <span key={name} className="bg-gray-100 px-3 py-1 rounded-full border border-gray-200">{name}</span>
+
+          <div className="flex flex-wrap justify-center gap-4 mt-6">
+            {TEAM.map((member) => (
+              <div
+                key={member.name}
+                className="flex flex-col items-center text-center bg-gray-50 rounded-md p-5 border border-gray-200 w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)]"
+              >
+                <div className="relative w-24 h-24 rounded-full overflow-hidden border border-gray-200 bg-white mb-3">
+                  <Image
+                    src={member.photo}
+                    alt={member.name}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="font-semibold text-gray-900 text-sm">{member.name}</div>
+                {member.role && (
+                  <div className="text-xs text-gray-500 mb-3">{member.role}</div>
+                )}
+                <div className="flex items-center gap-2 mt-3">
+                  {member.linkedin && (
+                    <a
+                      href={member.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${member.name} on LinkedIn`}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-300 transition-colors"
+                    >
+                      <Linkedin className="w-4 h-4" />
+                    </a>
+                  )}
+                  <a
+                    href={member.university}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${member.name} at Paderborn University`}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-300 transition-colors"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
             ))}
           </div>
         </div>
