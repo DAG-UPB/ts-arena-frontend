@@ -219,8 +219,6 @@ export default function Home() {
               challengeId={oldestActiveRound.id}
               challengeName={oldestActiveRound.name || oldestActiveRound.round_name}
               challengeDescription={oldestActiveRound.description}
-              startDate={oldestActiveRound.start_time}
-              endDate={oldestActiveRound.end_time}
               frequency={oldestActiveRound.frequency}
               horizon={oldestActiveRound.horizon}
               seriesId={SERIES_ID}
