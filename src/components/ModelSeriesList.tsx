@@ -170,13 +170,14 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
         name: 'Ground Truth',
         line: { width: 2, color: '#000000', dash: 'solid' },
         marker: { size: 4 },
+        hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
       });
     }
 
     roundsWithForecasts.forEach((round, idx) => {
       const forecastPoints = round.forecasts!;
       const color = colors[idx % colors.length];
-      
+
       // Main forecast line for this round
       traces.push({
         x: forecastPoints.map(p => p.ts),
@@ -186,6 +187,7 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
         name: round.round_name,
         line: { width: 2, color: color },
         marker: { size: 3 },
+        hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
       });
     });
 

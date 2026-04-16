@@ -87,8 +87,9 @@ interface TimeSeriesChartProps {
   challengeId: number;
   challengeName: string;
   challengeDescription?: string;
-  startDate?: string;
-  endDate?: string;
+  registrationStart?: string;
+  registrationEnd?: string;
+  evaluationStart?: string;
   frequency?: string;
   horizon?: string;
   seriesId?: number;
@@ -97,7 +98,7 @@ interface TimeSeriesChartProps {
   status?: string;
 }
 
-export default function TimeSeriesChart({ challengeId, challengeName, challengeDescription, startDate, endDate, frequency, horizon, seriesId, on_title_page = false, definitionId, status }: TimeSeriesChartProps) {
+export default function TimeSeriesChart({ challengeId, challengeName, challengeDescription, registrationStart, registrationEnd, evaluationStart, frequency, horizon, seriesId, on_title_page = false, definitionId, status }: TimeSeriesChartProps) {
   const [seriesData, setSeriesData] = useState<SeriesDataItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -444,15 +445,21 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Start</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Registration Start</p>
               <p className="text-sm font-semibold text-gray-900">
-                {startDate ? new Date(startDate).toLocaleDateString() : 'N/A'}
+                {registrationStart ? new Date(registrationStart).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }) : 'N/A'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">End</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Registration End</p>
               <p className="text-sm font-semibold text-gray-900">
-                {endDate ? new Date(endDate).toLocaleDateString() : 'N/A'}
+                {registrationEnd ? new Date(registrationEnd).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }) : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Start of Evaluation</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {evaluationStart ? new Date(evaluationStart).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }) : 'N/A'}
               </p>
             </div>
           </div>
@@ -554,6 +561,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               line: { width: 2, color: '#000000', dash: 'solid' },
               legendgroup: 'actual',
               legendgrouptitle: { text: 'Observations' },
+              hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
             });
           }
 
@@ -568,6 +576,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               line: { width: 2, color: '#2563eb' },
               marker: { size: 4 },
               legendgroup: 'actual',
+              hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
             });
           }
 
@@ -679,6 +688,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   visible: isVisible ? true : 'legendonly',
                   legendgroup: `forecast-${idx}`,
                   legendgrouptitle: idx === 0 ? { text: 'Forecasts' } : undefined,
+                  hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
                 });
               }
             });
