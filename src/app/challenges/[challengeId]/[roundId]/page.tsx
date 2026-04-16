@@ -191,13 +191,14 @@ export default function RoundDetail() {
                   Registration is open — submit your forecasts by{' '}
                   <span className="font-semibold">
                     {round.registration_end 
-                      ? new Date(round.registration_end).toLocaleDateString('en-US', { 
+                      ? new Date(round.registration_end).toLocaleDateString('en-US', {
                           weekday: 'long',
-                          year: 'numeric', 
-                          month: 'long', 
+                          year: 'numeric',
+                          month: 'long',
                           day: 'numeric',
                           hour: '2-digit',
-                          minute: '2-digit'
+                          minute: '2-digit',
+                          timeZoneName: 'short'
                         })
                       : 'the registration deadline'}
                   </span>
@@ -226,8 +227,9 @@ export default function RoundDetail() {
               challengeId={round.round_id}
               challengeName={round.name || `Round ${params.roundId}`}
               challengeDescription={round.description || undefined}
-              startDate={round.start_time || undefined}
-              endDate={round.end_time || undefined}
+              registrationStart={round.registration_start || undefined}
+              registrationEnd={round.registration_end || undefined}
+              evaluationStart={round.end_time || undefined}
               frequency={round.frequency || undefined}
               horizon={round.horizon}
               status={round.status}

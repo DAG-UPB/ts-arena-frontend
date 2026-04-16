@@ -215,7 +215,8 @@ export default function ChallengeDefinitions() {
                                 month: 'short',
                                 day: 'numeric',
                                 hour: '2-digit',
-                                minute: '2-digit'
+                                minute: '2-digit',
+                                timeZoneName: 'short'
                               })}
                             </div>
                           )}
@@ -225,7 +226,8 @@ export default function ChallengeDefinitions() {
                                 month: 'short',
                                 day: 'numeric',
                                 hour: '2-digit',
-                                minute: '2-digit'
+                                minute: '2-digit',
+                                timeZoneName: 'short'
                               })}
                             </div>
                           )}

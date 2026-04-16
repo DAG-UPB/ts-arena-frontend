@@ -233,6 +233,7 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
                                     day: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit',
+                                    timeZoneName: 'short',
                                   })}</div>
                                   <div className="text-xs text-gray-500">to</div>
                                   <div>{new Date(round.registration_end).toLocaleDateString('en-US', {
@@ -241,6 +242,7 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
                                     day: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit',
+                                    timeZoneName: 'short',
                                   })}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -250,6 +252,7 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
                                     day: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit',
+                                    timeZoneName: 'short',
                                   })}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -259,6 +262,7 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
                                     day: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit',
+                                    timeZoneName: 'short',
                                   })}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

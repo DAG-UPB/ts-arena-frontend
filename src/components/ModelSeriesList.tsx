@@ -30,10 +30,10 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
     return new Set();
   });
 
-  const [expandedSeries, setExpandedSeries] = useState<Set<number>>(new Set());
-  const [seriesData, setSeriesData] = useState<Map<number, ExpandedSeriesData>>(new Map());
-  const [dateFilters, setDateFilters] = useState<Map<number, { startDate?: string; endDate?: string }>>(new Map());
-  const [pendingDateFilters, setPendingDateFilters] = useState<Map<number, { startDate?: string; endDate?: string }>>(new Map());
+  const [expandedSeries, setExpandedSeries] = useState<Set<string>>(new Set());
+  const [seriesData, setSeriesData] = useState<Map<string, ExpandedSeriesData>>(new Map());
+  const [dateFilters, setDateFilters] = useState<Map<string, { startDate?: string; endDate?: string }>>(new Map());
+  const [pendingDateFilters, setPendingDateFilters] = useState<Map<string, { startDate?: string; endDate?: string }>>(new Map());
 
   const toggleDefinition = (definitionId: number) => {
     setExpandedDefinitions(prev => {
@@ -48,88 +48,93 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
   };
 
   const fetchSeriesData = async (seriesId: number, definitionId: number, startDate?: string, endDate?: string) => {
-    setSeriesData(prev => new Map(prev).set(seriesId, { loading: true }));
-    
+    const cacheKey = `${seriesId}-${definitionId}`;
+    setSeriesData(prev => new Map(prev).set(cacheKey, { loading: true }));
+
     try {
       const data = await getModelSeriesForecasts(modelId, definitionId, seriesId, startDate, endDate);
       const roundsWithForecasts = data.rounds.filter(r => r.forecast_exists && r.forecasts && r.forecasts.length > 0);
       console.log(`Series ${seriesId} (${data.series_name}):`, {
         totalRounds: data.rounds.length,
         roundsWithForecasts: roundsWithForecasts.length,
-        rounds: roundsWithForecasts.map(r => ({ 
-          id: r.round_id, 
-          name: r.round_name, 
+        rounds: roundsWithForecasts.map(r => ({
+          id: r.round_id,
+          name: r.round_name,
           points: r.forecasts?.length || 0,
           forecasts: r.forecasts
         }))
       });
-      setSeriesData(prev => new Map(prev).set(seriesId, { loading: false, data }));
+      setSeriesData(prev => new Map(prev).set(cacheKey, { loading: false, data }));
     } catch (error) {
       console.error('Error fetching forecasts:', error);
-      setSeriesData(prev => new Map(prev).set(seriesId, { 
-        loading: false, 
-        error: 'Failed to load forecast data' 
+      setSeriesData(prev => new Map(prev).set(cacheKey, {
+        loading: false,
+        error: 'Failed to load forecast data'
       }));
     }
   };
 
   const toggleSeries = async (seriesId: number, definitionId: number) => {
-    const isExpanding = !expandedSeries.has(seriesId);
-    
+    const cacheKey = `${seriesId}-${definitionId}`;
+    const isExpanding = !expandedSeries.has(cacheKey);
+
     setExpandedSeries(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(seriesId)) {
-        newSet.delete(seriesId);
+      if (newSet.has(cacheKey)) {
+        newSet.delete(cacheKey);
       } else {
-        newSet.add(seriesId);
+        newSet.add(cacheKey);
       }
       return newSet;
     });
 
     // If expanding and we don't have data yet, fetch it
-    if (isExpanding && !seriesData.has(seriesId)) {
-      let filters = dateFilters.get(seriesId);
-      
+    if (isExpanding && !seriesData.has(cacheKey)) {
+      let filters = dateFilters.get(cacheKey);
+
       // Set default start date to 30 days ago if not already set
       if (!filters?.startDate) {
         const defaultStartDate = new Date();
         defaultStartDate.setDate(defaultStartDate.getDate() - 30);
         const startDateStr = defaultStartDate.toISOString().split('T')[0];
-        
+
         filters = { ...filters, startDate: startDateStr };
-        setDateFilters(prev => new Map(prev).set(seriesId, filters!));
+        setDateFilters(prev => new Map(prev).set(cacheKey, filters!));
       }
-      
+
       await fetchSeriesData(seriesId, definitionId, filters?.startDate, filters?.endDate);
     }
   };
 
-  const handleDateChange = (seriesId: number, type: 'start' | 'end', value: string) => {
-    const currentFilters = pendingDateFilters.get(seriesId) || dateFilters.get(seriesId) || {};
+  const handleDateChange = (seriesId: number, definitionId: number, type: 'start' | 'end', value: string) => {
+    const cacheKey = `${seriesId}-${definitionId}`;
+    const currentFilters = pendingDateFilters.get(cacheKey) || dateFilters.get(cacheKey) || {};
     const newFilters = {
       ...currentFilters,
       [type === 'start' ? 'startDate' : 'endDate']: value
     };
-    
-    setPendingDateFilters(prev => new Map(prev).set(seriesId, newFilters));
+
+    setPendingDateFilters(prev => new Map(prev).set(cacheKey, newFilters));
   };
 
   const applyDateFilters = async (seriesId: number, definitionId: number) => {
-    const pending = pendingDateFilters.get(seriesId);
+    const cacheKey = `${seriesId}-${definitionId}`;
+    const pending = pendingDateFilters.get(cacheKey);
     if (pending) {
-      setDateFilters(prev => new Map(prev).set(seriesId, pending));
+      setDateFilters(prev => new Map(prev).set(cacheKey, pending));
       setPendingDateFilters(prev => {
         const newMap = new Map(prev);
-        newMap.delete(seriesId);
+        newMap.delete(cacheKey);
         return newMap;
       });
       await fetchSeriesData(seriesId, definitionId, pending.startDate, pending.endDate);
     }
   };
 
-  const renderPlot = (seriesId: number) => {
-    const data = seriesData.get(seriesId);
-    const filters = dateFilters.get(seriesId);
+  const renderPlot = (seriesId: number, definitionId: number) => {
+    const cacheKey = `${seriesId}-${definitionId}`;
+    const data = seriesData.get(cacheKey);
+    const filters = dateFilters.get(cacheKey);
     
     if (!data) return null;
     
@@ -170,13 +175,14 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
         name: 'Ground Truth',
         line: { width: 2, color: '#000000', dash: 'solid' },
         marker: { size: 4 },
+        hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
       });
     }
 
     roundsWithForecasts.forEach((round, idx) => {
       const forecastPoints = round.forecasts!;
       const color = colors[idx % colors.length];
-      
+
       // Main forecast line for this round
       traces.push({
         x: forecastPoints.map(p => p.ts),
@@ -186,6 +192,7 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
         name: round.round_name,
         line: { width: 2, color: color },
         marker: { size: 3 },
+        hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
       });
     });
 
@@ -342,7 +349,8 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
                   </tr>
                   
                   {isExpanded && definition.series.map((series) => {
-                    const isSeriesExpanded = expandedSeries.has(series.series_id);
+                    const cacheKey = `${series.series_id}-${definition.definition_id}`;
+                    const isSeriesExpanded = expandedSeries.has(cacheKey);
                     
                     return (
                       <React.Fragment key={series.series_id}>
@@ -390,8 +398,8 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
                                     <span className="font-medium">From:</span>
                                     <input 
                                       type="date" 
-                                      value={(pendingDateFilters.get(series.series_id) || dateFilters.get(series.series_id))?.startDate || ''}
-                                      onChange={(e) => handleDateChange(series.series_id, 'start', e.target.value)}
+                                      value={(pendingDateFilters.get(cacheKey) || dateFilters.get(cacheKey))?.startDate || ''}
+                                      onChange={(e) => handleDateChange(series.series_id, definition.definition_id, 'start', e.target.value)}
                                       className="px-2 py-1 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400" 
                                     />
                                   </label>
@@ -399,20 +407,20 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
                                     <span className="font-medium">To:</span>
                                     <input 
                                       type="date" 
-                                      value={(pendingDateFilters.get(series.series_id) || dateFilters.get(series.series_id))?.endDate || ''}
-                                      onChange={(e) => handleDateChange(series.series_id, 'end', e.target.value)}
+                                      value={(pendingDateFilters.get(cacheKey) || dateFilters.get(cacheKey))?.endDate || ''}
+                                      onChange={(e) => handleDateChange(series.series_id, definition.definition_id, 'end', e.target.value)}
                                       className="px-2 py-1 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400" 
                                     />
                                   </label>
                                   <button
                                     onClick={() => applyDateFilters(series.series_id, definition.definition_id)}
                                     className="px-3 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                                    disabled={!pendingDateFilters.has(series.series_id)}
+                                    disabled={!pendingDateFilters.has(cacheKey)}
                                   >
                                     Filter
                                   </button>
                                 </div>
-                                {renderPlot(series.series_id)}
+                                {renderPlot(series.series_id, definition.definition_id)}
                               </div>
                             </td>
                           </tr>
