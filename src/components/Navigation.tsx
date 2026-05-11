@@ -10,6 +10,7 @@ export default function Navigation() {
   const navItems = [
     { href: '/', label: 'Rankings' },
     { href: '/challenges', label: 'Challenges' },
+    { href: '/models', label: 'Models' },
     { href: '/add-model', label: 'Add Model' },
     { href: '/backtesting-archive', label: 'Backtesting Archive' },
     { href: '/news', label: 'News' },
