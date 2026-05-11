@@ -211,7 +211,18 @@ export default function AboutPage() {
                     className="object-cover"
                   />
                 </div>
-                <div className="font-semibold text-gray-900 text-sm">{member.name}</div>
+                {member.linkedin ? (
+                  <a
+                    href={member.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-gray-900 text-sm hover:text-blue-600 transition-colors"
+                  >
+                    {member.name}
+                  </a>
+                ) : (
+                  <div className="font-semibold text-gray-900 text-sm">{member.name}</div>
+                )}
                 {member.role && (
                   <div className="text-xs text-gray-500 mb-3">{member.role}</div>
                 )}
