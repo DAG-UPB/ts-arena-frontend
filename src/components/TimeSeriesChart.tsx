@@ -813,12 +813,22 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                     </div>
                   )}
                   {series.contextData.length > 0 && (
-                    <Plot
-                      data={plotData}
-                      layout={layout}
-                      style={{ width: '100%', height: '400px' }}
-                      useResizeHandler
-                    />
+                    <>
+                      <Plot
+                        data={plotData}
+                        layout={layout}
+                        style={{ width: '100%', height: '400px' }}
+                        useResizeHandler
+                      />
+                      <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                        Shaded bands around each forecast show the{' '}
+                        <span className="font-medium text-gray-700">60 %</span>{' '}
+                        (q<sub>0.2</sub>–q<sub>0.8</sub>) and{' '}
+                        <span className="font-medium text-gray-700">40 %</span>{' '}
+                        (q<sub>0.3</sub>–q<sub>0.7</sub>) prediction intervals,
+                        when the model emits quantile forecasts.
+                      </p>
+                    </>
                   )}
                 </div>
               )}
