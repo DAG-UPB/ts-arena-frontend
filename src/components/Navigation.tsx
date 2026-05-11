@@ -12,6 +12,7 @@ export default function Navigation() {
     { href: '/challenges', label: 'Challenges' },
     { href: '/add-model', label: 'Add Model' },
     { href: '/backtesting-archive', label: 'Backtesting Archive' },
+    { href: '/news', label: 'News' },
     { href: '/about', label: 'About' },
   ];
 
