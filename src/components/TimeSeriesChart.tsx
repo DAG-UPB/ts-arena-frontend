@@ -46,19 +46,6 @@ function durationToMs(isoStr: string | undefined): number | null {
   }
 }
 
-// Number of forecast steps a model has to predict for one round, derived from
-// the horizon duration divided by the sampling frequency. Returns null if
-// either value is missing or unparseable.
-function computeForecastSteps(
-  horizon: string | undefined,
-  frequency: string | undefined,
-): number | null {
-  const horizonMs = durationToMs(horizon);
-  const frequencyMs = durationToMs(frequency);
-  if (!horizonMs || !frequencyMs || frequencyMs <= 0) return null;
-  return Math.round(horizonMs / frequencyMs);
-}
-
 // Convert ISO 8601 duration to human-readable format
 function formatFrequency(freq: string | undefined): string {
   if (!freq) return 'N/A';
@@ -455,12 +442,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               <p className="text-xs text-gray-500 uppercase tracking-wide">Horizon</p>
               <p className="text-sm font-semibold text-gray-900">
                 {horizon || 'N/A'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Prediction Steps</p>
-              <p className="text-sm font-semibold text-gray-900">
-                {computeForecastSteps(horizon, frequency) ?? 'N/A'}
               </p>
             </div>
             <div>
