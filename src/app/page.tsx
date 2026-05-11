@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
 import RankingTableElo from '@/src/components/RankingTableElo';
@@ -42,10 +42,27 @@ export default function Home() {
   };
 
   // Generate dropdown options from API data
-  const monthOptions = filterOptions.calculation_dates.map((item) => ({
-    label: formatCalculationDateLabel(item.calculation_date, item.is_month_end),
-    value: item.calculation_date,
-  }));
+  const monthOptions = useMemo(() => {
+    const dates = filterOptions.calculation_dates;
+    if (!dates || dates.length === 0) return [];
+
+    const snapshots = dates.filter(d => d.is_month_end);
+    const recent = dates.find(d => !d.is_month_end);
+
+    const options = snapshots.map(item => ({
+      label: formatCalculationDateLabel(item.calculation_date, true),
+      value: item.calculation_date,
+    }));
+
+    if (recent) {
+      options.unshift({
+        label: 'Recent',
+        value: recent.calculation_date,
+      });
+    }
+
+    return options;
+  }, [filterOptions.calculation_dates]);
 
   // Format frequency_horizon for display (e.g., "00:15:00::1 day" -> "15min / 1 day")
   const formatFrequencyHorizon = (fh: string) => {

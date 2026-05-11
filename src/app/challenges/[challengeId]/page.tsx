@@ -31,10 +31,27 @@ export default function ChallengeDefinitionDetail() {
   };
 
   // Generate dropdown options from API data
-  const monthOptions = filterOptions?.calculation_dates.map((item) => ({
-    label: formatCalculationDateLabel(item.calculation_date, item.is_month_end),
-    value: item.calculation_date,
-  })) || [];
+  const monthOptions = useMemo(() => {
+    const dates = filterOptions?.calculation_dates;
+    if (!dates || dates.length === 0) return [];
+
+    const snapshots = dates.filter(d => d.is_month_end);
+    const recent = dates.find(d => !d.is_month_end);
+
+    const options = snapshots.map(item => ({
+      label: formatCalculationDateLabel(item.calculation_date, true),
+      value: item.calculation_date,
+    }));
+
+    if (recent) {
+      options.unshift({
+        label: 'Recent',
+        value: recent.calculation_date,
+      });
+    }
+
+    return options;
+  }, [filterOptions?.calculation_dates]);
 
   useEffect(() => {
     const fetchDefinition = async () => {
