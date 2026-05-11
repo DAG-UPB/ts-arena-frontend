@@ -6,6 +6,36 @@ import Breadcrumbs from '@/src/components/Breadcrumbs';
 import type { ChallengeDefinition } from '@/src/types/challenge';
 
 type GroupByOption = 'none' | 'frequency' | 'horizon' | 'domain' | 'subdomain';
+type SortByOption = 'next_registration' | 'alphabetical';
+
+const sortDefinitions = (
+  defs: ChallengeDefinition[],
+  sortBy: SortByOption,
+): ChallengeDefinition[] => {
+  const sorted = [...defs];
+  if (sortBy === 'alphabetical') {
+    sorted.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+  } else {
+    // next_registration: ascending by next_registration_start.
+    // Definitions without an upcoming registration go to the bottom,
+    // ordered alphabetically among themselves.
+    sorted.sort((a, b) => {
+      const aTime = a.next_registration_start
+        ? new Date(a.next_registration_start).getTime()
+        : NaN;
+      const bTime = b.next_registration_start
+        ? new Date(b.next_registration_start).getTime()
+        : NaN;
+      const aHas = !Number.isNaN(aTime);
+      const bHas = !Number.isNaN(bTime);
+      if (aHas && bHas && aTime !== bTime) return aTime - bTime;
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+      return (a.name ?? '').localeCompare(b.name ?? '');
+    });
+  }
+  return sorted;
+};
 
 
 export default function ChallengeDefinitions() {
@@ -13,6 +43,7 @@ export default function ChallengeDefinitions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [groupBy, setGroupBy] = useState<GroupByOption>('none');
+  const [sortBy, setSortBy] = useState<SortByOption>('next_registration');
 
   useEffect(() => {
     const fetchDefinitions = async () => {
@@ -39,14 +70,14 @@ export default function ChallengeDefinitions() {
 
   const groupedDefinitions = useMemo(() => {
     if (groupBy === 'none') {
-      return { 'All Challenges': [...definitions] };
+      return { 'All Challenges': sortDefinitions(definitions, sortBy) };
     }
 
     const groups: Record<string, ChallengeDefinition[]> = {};
-    
+
     definitions.forEach((def) => {
       let key: string;
-      
+
       switch (groupBy) {
         case 'frequency':
           key = def.frequency || 'No Frequency';
@@ -63,7 +94,7 @@ export default function ChallengeDefinitions() {
         default:
           key = 'Other';
       }
-      
+
       if (!groups[key]) {
         groups[key] = [];
       }
@@ -75,18 +106,18 @@ export default function ChallengeDefinitions() {
     const sortedKeys = Object.keys(groups).sort((a, b) => {
       const aIsNo = a.startsWith('No ');
       const bIsNo = b.startsWith('No ');
-      
+
       if (aIsNo && !bIsNo) return 1;
       if (!aIsNo && bIsNo) return -1;
       return a.localeCompare(b);
     });
-    
+
     sortedKeys.forEach(key => {
-      sortedGroups[key] = groups[key];
+      sortedGroups[key] = sortDefinitions(groups[key], sortBy);
     });
 
     return sortedGroups;
-  }, [definitions, groupBy]);
+  }, [definitions, groupBy, sortBy]);
 
   if (loading) {
     return (
@@ -119,7 +150,20 @@ export default function ChallengeDefinitions() {
         </p>
       </div>
 
-      <div className="mb-6 flex items-center justify-end gap-3">
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
+        <label htmlFor="sortBy" className="text-sm font-medium text-gray-700">
+          Sort by:
+        </label>
+        <select
+          id="sortBy"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortByOption)}
+          className="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+        >
+          <option value="next_registration">Next Registration</option>
+          <option value="alphabetical">Alphabetical</option>
+        </select>
+
         <label htmlFor="groupBy" className="text-sm font-medium text-gray-700">
           Group by:
         </label>
