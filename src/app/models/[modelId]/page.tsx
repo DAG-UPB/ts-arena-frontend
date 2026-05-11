@@ -6,7 +6,8 @@ import Breadcrumbs from '@/src/components/Breadcrumbs';
 import ModelPerformanceCharts from '@/src/components/ModelPerformanceCharts';
 import ModelSeriesList from '@/src/components/ModelSeriesList';
 import DetailsCard from '@/src/components/DetailsCard';
-import { getModelRankings, ModelDetailRankings, getModelSeriesByDefinition, ModelSeriesByDefinition, getModelDetails, ModelDetails } from '@/src/services/modelService';
+import ModelActiveRounds from '@/src/components/ModelActiveRounds';
+import { getModelRankings, ModelDetailRankings, getModelSeriesByDefinition, ModelSeriesByDefinition, getModelDetails, ModelDetails, getModelActiveRounds, ModelActiveRoundsResponse } from '@/src/services/modelService';
 
 export default function ModelDetailPage() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function ModelDetailPage() {
   const [modelDetails, setModelDetails] = useState<ModelDetails | null>(null);
   const [rankingsData, setRankingsData] = useState<ModelDetailRankings | null>(null);
   const [seriesData, setSeriesData] = useState<ModelSeriesByDefinition | null>(null);
+  const [activeRoundsData, setActiveRoundsData] = useState<ModelActiveRoundsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,14 +28,16 @@ export default function ModelDetailPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [details, rankings, series] = await Promise.all([
+        const [details, rankings, series, activeRounds] = await Promise.all([
           getModelDetails(modelId),
           getModelRankings(modelId),
-          getModelSeriesByDefinition(modelId)
+          getModelSeriesByDefinition(modelId),
+          getModelActiveRounds(modelId)
         ]);
         setModelDetails(details);
         setRankingsData(rankings);
         setSeriesData(series);
+        setActiveRoundsData(activeRounds);
       } catch (error) {
         console.error('Error fetching model data:', error);
       } finally {
@@ -97,6 +101,10 @@ export default function ModelDetailPage() {
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <div className="text-lg text-gray-600">Failed to load model details.</div>
           </div>
+        )}
+
+        {!loading && activeRoundsData && activeRoundsData.rounds.length > 0 && (
+          <ModelActiveRounds rounds={activeRoundsData.rounds} />
         )}
 
         <div className="bg-white rounded-lg shadow-md p-8 mb-6">

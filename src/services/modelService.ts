@@ -156,6 +156,44 @@ export async function getModelRankings(modelId: string): Promise<ModelDetailRank
   return response.json();
 }
 
+export interface ModelActiveRound {
+  round_id: number;
+  round_name: string;
+  description: string | null;
+  definition_id: number | null;
+  definition_name: string | null;
+  status: string;
+  registration_start: string | null;
+  registration_end: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  frequency: string | null;
+  horizon: string | null;
+}
+
+export interface ModelActiveRoundsResponse {
+  model_id: number;
+  model_readable_id: string;
+  model_name: string;
+  rounds: ModelActiveRound[];
+}
+
+export async function getModelActiveRounds(modelId: string): Promise<ModelActiveRoundsResponse | null> {
+  const url = `/api/v1/models/${modelId}/active-rounds`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      // 404 (endpoint not deployed yet, or unknown model) → treat as "no active rounds"
+      return null;
+    }
+    return response.json();
+  } catch (err) {
+    console.error('Error fetching active rounds:', err);
+    return null;
+  }
+}
+
 export async function getModelSeriesByDefinition(modelId: string): Promise<ModelSeriesByDefinition> {
   const url = `/api/v1/models/${modelId}/series-by-definition`;
 
