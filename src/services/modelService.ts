@@ -92,6 +92,26 @@ export interface ModelDetails {
   architecture: string;
   pretraining_data: string;
   publishing_date: string;
+  // Optional discovery / provenance metadata (see backend ticket #43).
+  paper_url?: string | null;
+  repo_url?: string | null;
+  website_url?: string | null;
+  description?: string | null;
+  arxiv_id?: string | null;
+}
+
+/** Single row in `GET /api/v1/models`. Backs the Models tab listing. */
+export interface ModelListItem {
+  id: number;
+  readable_id: string | null;
+  name: string;
+  model_family: string | null;
+  model_size: number | null;
+  architecture: string | null;
+  paper_url?: string | null;
+  repo_url?: string | null;
+  website_url?: string | null;
+  arxiv_id?: string | null;
 }
 
 export interface ModelDetailRankings {
@@ -198,6 +218,14 @@ export async function getModelSeriesByDefinition(modelId: string): Promise<Model
   const url = `/api/v1/models/${modelId}/series-by-definition`;
 
   const response = await fetch(url);
+  return response.json();
+}
+
+export async function getAllModels(): Promise<ModelListItem[]> {
+  const response = await fetch('/api/v1/models');
+  if (!response.ok) {
+    throw new Error(`Failed to fetch models list: ${response.status}`);
+  }
   return response.json();
 }
 

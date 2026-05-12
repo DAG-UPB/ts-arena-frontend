@@ -63,40 +63,93 @@ export default function ModelDetailPage() {
             <div className="text-lg text-gray-600">Loading model details...</div>
           </div>
         ) : modelDetails ? (
-          <DetailsCard
-            title={modelDetails.name}
-            id={`Model ID: ${modelDetails.readable_id}`}
-            fields={[
-              {
-                label: 'Model Family',
-                value: modelDetails.model_family
-              },
-              {
-                label: 'Architecture',
-                value: modelDetails.architecture
-              },
-              {
-                label: 'Model Size',
-                value: `${modelDetails.model_size.toLocaleString()}M parameters`
-              },
-              {
-                label: 'Pretraining Data',
-                value: modelDetails.pretraining_data
-              },
-              {
-                label: 'Hosting',
-                value: modelDetails.hosting
-              },
-              {
-                label: 'Publishing Date',
-                value: new Date(modelDetails.publishing_date).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })
-              }
-            ]}
-          />
+          <>
+            <DetailsCard
+              title={modelDetails.name}
+              id={`Model ID: ${modelDetails.readable_id}`}
+              description={modelDetails.description ?? undefined}
+              fields={[
+                {
+                  label: 'Model Family',
+                  value: modelDetails.model_family
+                },
+                {
+                  label: 'Architecture',
+                  value: modelDetails.architecture
+                },
+                {
+                  label: 'Model Size',
+                  value: `${modelDetails.model_size.toLocaleString()}M parameters`
+                },
+                {
+                  label: 'Pretraining Data',
+                  value: modelDetails.pretraining_data
+                },
+                {
+                  label: 'Hosting',
+                  value: modelDetails.hosting
+                },
+                {
+                  label: 'Publishing Date',
+                  value: new Date(modelDetails.publishing_date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })
+                }
+              ]}
+            />
+            {(modelDetails.paper_url ||
+              modelDetails.repo_url ||
+              modelDetails.website_url ||
+              modelDetails.arxiv_id) && (
+              <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Resources</h2>
+                <div className="flex flex-wrap gap-2">
+                  {modelDetails.paper_url && (
+                    <a
+                      href={modelDetails.paper_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    >
+                      Paper ↗
+                    </a>
+                  )}
+                  {modelDetails.repo_url && (
+                    <a
+                      href={modelDetails.repo_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    >
+                      Repository ↗
+                    </a>
+                  )}
+                  {modelDetails.website_url && (
+                    <a
+                      href={modelDetails.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    >
+                      Website ↗
+                    </a>
+                  )}
+                  {modelDetails.arxiv_id && !modelDetails.paper_url && (
+                    <a
+                      href={`https://arxiv.org/abs/${modelDetails.arxiv_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    >
+                      arXiv:{modelDetails.arxiv_id} ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <div className="text-lg text-gray-600">Failed to load model details.</div>
