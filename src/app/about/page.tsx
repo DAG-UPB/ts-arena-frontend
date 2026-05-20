@@ -56,6 +56,49 @@ export default function AboutPage() {
           </p>
         </div>
 
+        {/* Platform Overview */}
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <FlaskConical className="w-6 h-6 text-blue-600 flex-shrink-0" />
+            <h2 className="text-xl font-semibold text-gray-900">How It Works</h2>
+          </div>
+          <p className="text-gray-700 text-sm leading-relaxed mb-4">
+            TS-Arena runs continuously scheduled forecasting challenges on real-world energy data. When a new
+            challenge round opens, models have a registration window to submit their forecasts for a future
+            time period. Once the ground truth becomes available, submitted forecasts are automatically
+            evaluated and rankings are updated.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
+              <div className="font-semibold text-gray-800 text-sm mb-1">Pre-Registration</div>
+              <p className="text-xs text-gray-600">Forecasts must be submitted before ground truth exists, making data leakage structurally impossible.</p>
+            </div>
+            <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
+              <div className="font-semibold text-gray-800 text-sm mb-1">MASE Scoring</div>
+              <p className="text-xs text-gray-600">Mean Absolute Scaled Error provides scale-independent accuracy scores comparable across time series.</p>
+            </div>
+            <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
+              <div className="font-semibold text-gray-800 text-sm mb-1">ELO Ranking</div>
+              <p className="text-xs text-gray-600">Pairwise ELO ratings with confidence intervals enable fair comparison between models over time.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Data */}
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <BarChart3 className="w-6 h-6 text-blue-600 flex-shrink-0" />
+            <h2 className="text-xl font-semibold text-gray-900">Data & Challenges</h2>
+          </div>
+          <p className="text-gray-700 text-sm leading-relaxed">
+            The benchmark covers 186 energy-sector time series from multiple European and North American grid
+            operators (SMARD, EIA, Fingrid, ENTSO-E, GridStatus), organized into 14 challenge definitions with
+            varying forecast frequencies (15 min, 1 h) and horizons (1 day, 1 week). Challenges span
+            electricity consumption and generation, providing diverse conditions for a thorough model
+            evaluation.
+          </p>
+        </div>
+
         {/* Paper Section */}
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8 mb-6">
           <div className="flex items-center gap-3 mb-4">
@@ -111,7 +154,7 @@ export default function AboutPage() {
 
           <div className="bg-gray-50 rounded-md p-4 mb-5 text-sm text-gray-700 leading-relaxed border border-gray-200">
             <span className="font-semibold text-gray-800">Abstract. </span>
-            While Time Series Foundation Models (TSFMs) offer transformative capabilities for forecasting, they simultaneously risk triggering a fundamental evaluation crisis. This crisis is driven by information leakage due to overlapping training and test sets across different models, as well as the illegitimate transfer of global patterns to test data. While the ability to learn shared temporal dynamics represents a primary strength of these models, their evaluation on historical archives often permits the exploitation of observed global shocks, which violates the independence required for valid benchmarking. We introduce TS-Arena, a platform that restores the operational integrity of forecasting by treating the genuinely unknown future as the definitive test environment. By implementing a pre-registration mechanism on live data streams, the platform ensures that evaluation targets remain physically non-existent during inference, thereby enforcing a strict global temporal split. This methodology establishes a moving temporal frontier that prevents historical contamination and provides an authentic assessment of model generalization. Initially applied within the energy sector, TS-Arena provides a sustainable infrastructure for comparing foundation models under real-world constraints. A prototype of the platform is available at this https URL. 
+            While Time Series Foundation Models (TSFMs) offer transformative capabilities for forecasting, they simultaneously risk triggering a fundamental evaluation crisis. This crisis is driven by information leakage due to overlapping training and test sets across different models, as well as the illegitimate transfer of global patterns to test data. While the ability to learn shared temporal dynamics represents a primary strength of these models, their evaluation on historical archives often permits the exploitation of observed global shocks, which violates the independence required for valid benchmarking. We introduce TS-Arena, a platform that restores the operational integrity of forecasting by treating the genuinely unknown future as the definitive test environment. By implementing a pre-registration mechanism on live data streams, the platform ensures that evaluation targets remain physically non-existent during inference, thereby enforcing a strict global temporal split. This methodology establishes a moving temporal frontier that prevents historical contamination and provides an authentic assessment of model generalization. Initially applied within the energy sector, TS-Arena provides a sustainable infrastructure for comparing foundation models under real-world constraints. A prototype of the platform is available at this https URL.
           </div>
 
           <a
@@ -123,49 +166,6 @@ export default function AboutPage() {
             <BookOpen className="w-4 h-4" />
             Read on arXiv
           </a>
-        </div>
-
-        {/* Platform Overview */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <FlaskConical className="w-6 h-6 text-blue-600 flex-shrink-0" />
-            <h2 className="text-xl font-semibold text-gray-900">How It Works</h2>
-          </div>
-          <p className="text-gray-700 text-sm leading-relaxed mb-4">
-            TS-Arena runs continuously scheduled forecasting challenges on real-world energy data. When a new
-            challenge round opens, models have a registration window to submit their forecasts for a future
-            time period. Once the ground truth becomes available, submitted forecasts are automatically
-            evaluated and rankings are updated.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
-              <div className="font-semibold text-gray-800 text-sm mb-1">Pre-Registration</div>
-              <p className="text-xs text-gray-600">Forecasts must be submitted before ground truth exists, making data leakage structurally impossible.</p>
-            </div>
-            <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
-              <div className="font-semibold text-gray-800 text-sm mb-1">MASE Scoring</div>
-              <p className="text-xs text-gray-600">Mean Absolute Scaled Error provides scale-independent accuracy scores comparable across time series.</p>
-            </div>
-            <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
-              <div className="font-semibold text-gray-800 text-sm mb-1">ELO Ranking</div>
-              <p className="text-xs text-gray-600">Pairwise ELO ratings with confidence intervals enable fair comparison between models over time.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Data */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 sm:p-8 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <BarChart3 className="w-6 h-6 text-blue-600 flex-shrink-0" />
-            <h2 className="text-xl font-semibold text-gray-900">Data & Challenges</h2>
-          </div>
-          <p className="text-gray-700 text-sm leading-relaxed">
-            The benchmark covers 186 energy-sector time series from multiple European and North American grid
-            operators (SMARD, EIA, Fingrid, ENTSO-E, GridStatus), organized into 14 challenge definitions with
-            varying forecast frequencies (15 min, 1 h) and horizons (1 day, 1 week). Challenges span
-            electricity consumption and generation, providing diverse conditions for a thorough model
-            evaluation.
-          </p>
         </div>
 
         {/* Contact */}

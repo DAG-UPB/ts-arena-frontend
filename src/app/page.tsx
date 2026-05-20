@@ -287,6 +287,25 @@ export default function Home() {
           <RankingTableElo rankings={rankingsData.overall} />
         </div>
 
+        {/* Rankings by Frequency/Horizon */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Frequency & Horizon Combinations</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Rankings evaluated across different forecast frequency and horizon configurations.
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filterOptions.frequency_horizons.map((fh) => (
+              <RankingTableElo
+                key={fh}
+                rankings={rankingsData.byFrequencyHorizon[fh] || []}
+                compact
+                title={formatFrequencyHorizon(fh)}
+                limit={10}
+              />
+            ))}
+          </div>
+        </div>
+
         {/* Rankings by Challenge Definition */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Challenge</h2>
@@ -302,25 +321,6 @@ export default function Home() {
                 title={def.name}
                 limit={10}
                 definitionId={def.id}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Rankings by Frequency/Horizon */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Frequency & Horizon Combinations</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Rankings evaluated across different forecast frequency and horizon configurations.
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filterOptions.frequency_horizons.map((fh) => (
-              <RankingTableElo
-                key={fh}
-                rankings={rankingsData.byFrequencyHorizon[fh] || []}
-                compact
-                title={formatFrequencyHorizon(fh)}
-                limit={10}
               />
             ))}
           </div>
