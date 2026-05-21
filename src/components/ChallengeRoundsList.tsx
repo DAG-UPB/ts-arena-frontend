@@ -70,27 +70,31 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
   };
 
   const getStatusConfig = (status: string) => {
-    const configs: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
+    const configs: Record<string, { label: string; description: string; color: string; bgColor: string; borderColor: string }> = {
       registration: {
         label: 'Registration',
+        description: 'Open for model submission. The target time series is hidden — models receive only the context window and submit blind forecasts before the round starts.',
         color: 'text-yellow-800',
         bgColor: 'bg-yellow-50',
         borderColor: 'border-yellow-200'
       },
       active: {
         label: 'Active',
+        description: 'Round is running. Submissions are closed and models are being evaluated against live ground-truth data.',
         color: 'text-green-800',
         bgColor: 'bg-green-50',
         borderColor: 'border-green-200'
       },
       completed: {
         label: 'Completed',
+        description: 'Evaluation is finished and final scores are available.',
         color: 'text-blue-800',
         bgColor: 'bg-blue-50',
         borderColor: 'border-blue-200'
       },
       cancelled: {
         label: 'Cancelled',
+        description: 'This round was cancelled before evaluation completed.',
         color: 'text-gray-800',
         bgColor: 'bg-gray-50',
         borderColor: 'border-gray-200'
@@ -98,6 +102,7 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
     };
     return configs[status] || {
       label: status.charAt(0).toUpperCase() + status.slice(1),
+      description: '',
       color: 'text-gray-800',
       bgColor: 'bg-gray-50',
       borderColor: 'border-gray-200'
@@ -132,28 +137,39 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
                 onClick={() => toggleStatus(status)}
                 className={`w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${config.bgColor}`}
               >
-                <div className="flex items-center space-x-3">
-                  {isExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-gray-500" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-gray-500" />
-                  )}
-                  <span className={`text-lg font-semibold ${config.color}`}>
-                    {config.label}
-                  </span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    status === 'active' 
-                      ? 'bg-green-100 text-green-800'
-                      : status === 'registration'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : status === 'completed'
-                      ? 'bg-blue-100 text-blue-800'
-                      : status === 'cancelled'
-                      ? 'bg-gray-100 text-gray-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {totalRounds} {totalRounds === 1 ? 'round' : 'rounds'}
-                  </span>
+                <div className="flex items-start space-x-3">
+                  <div className="mt-1 flex-shrink-0">
+                    {isExpanded ? (
+                      <ChevronDown className="h-5 w-5 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-gray-500" />
+                    )}
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center space-x-3">
+                      <span className={`text-lg font-semibold ${config.color}`}>
+                        {config.label}
+                      </span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : status === 'registration'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : status === 'completed'
+                          ? 'bg-blue-100 text-blue-800'
+                          : status === 'cancelled'
+                          ? 'bg-gray-100 text-gray-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {totalRounds} {totalRounds === 1 ? 'round' : 'rounds'}
+                      </span>
+                    </div>
+                    {config.description && (
+                      <p className={`mt-0.5 text-xs ${config.color} opacity-75`}>
+                        {config.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </button>
 
