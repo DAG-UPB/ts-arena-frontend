@@ -44,6 +44,7 @@ export default function RoundDetail() {
   const [error, setError] = useState<string | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRound = async () => {
@@ -91,17 +92,20 @@ export default function RoundDetail() {
       
       try {
         setLeaderboardLoading(true);
+        setLeaderboardError(null);
         const response = await fetch(`/api/v1/rounds/${roundId}/leaderboard`);
-        
+
         if (!response.ok) {
-          console.error('Failed to fetch leaderboard');
+          console.error('Failed to fetch leaderboard:', response.status);
+          setLeaderboardError('Failed to load leaderboard data. Please try refreshing the page.');
           return;
         }
-        
+
         const data: LeaderboardEntry[] = await response.json();
         setLeaderboard(data);
       } catch (err) {
         console.error('Error fetching leaderboard:', err);
+        setLeaderboardError('Failed to load leaderboard data. Please try refreshing the page.');
       } finally {
         setLeaderboardLoading(false);
       }
@@ -238,10 +242,11 @@ export default function RoundDetail() {
         )}
 
         {/* Leaderboard Section */}
-        <LeaderBoardRound 
+        <LeaderBoardRound
           leaderboard={leaderboard}
           loading={leaderboardLoading}
           status={round.status}
+          error={leaderboardError}
         />
       </div>
     </div>

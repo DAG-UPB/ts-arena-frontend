@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Clock } from 'lucide-react';
+import { AlertCircle, Clock } from 'lucide-react';
 import Pagination from './Pagination';
 
 interface LeaderboardEntry {
@@ -30,9 +30,10 @@ interface LeaderBoardRoundProps {
   leaderboard: LeaderboardEntry[];
   loading: boolean;
   status: string;
+  error?: string | null;
 }
 
-export default function LeaderBoardRound({ leaderboard, loading, status }: LeaderBoardRoundProps) {
+export default function LeaderBoardRound({ leaderboard, loading, status, error }: LeaderBoardRoundProps) {
   const [leaderboardPage, setLeaderboardPage] = useState(1);
   const MODELS_PER_PAGE = 10;
 
@@ -54,6 +55,12 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
           <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" strokeWidth={1.5} />
           <p className="text-lg font-medium text-gray-600">No leaderboard data available yet</p>
           <p className="text-sm text-gray-400 mt-1">The leaderboard will be available once the round begins.</p>
+        </div>
+      ) : error ? (
+        <div className="px-6 py-12 text-center text-gray-500">
+          <AlertCircle className="mx-auto h-10 w-10 text-red-400 mb-3" strokeWidth={1.5} />
+          <p className="text-base font-medium text-gray-700">Could not load leaderboard</p>
+          <p className="text-sm text-gray-400 mt-1">{error}</p>
         </div>
       ) : loading ? (
         <div className="px-6 py-12 text-center text-gray-500">
@@ -183,7 +190,12 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
         })()
       ) : (
         <div className="px-6 py-12 text-center text-gray-500">
-          No leaderboard data available for this round
+          <p className="text-base font-medium text-gray-600">No scores available for this round</p>
+          <p className="text-sm text-gray-400 mt-1">
+            {status === 'active'
+              ? 'Scores will appear as ground truth becomes available.'
+              : 'No forecasts were evaluated — models may not have participated or ground truth was unavailable.'}
+          </p>
         </div>
       )}
     </div>
