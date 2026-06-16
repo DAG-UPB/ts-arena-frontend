@@ -15,22 +15,39 @@ import Breadcrumbs from '@/src/components/Breadcrumbs';
 import { findFamily } from '@/src/content/models';
 import { CategoryBadge } from '@/src/content/models/CategoryBadge';
 import {
-  getAllModels,
-  type ModelListItem,
+  getFilteredRankings,
+  type ModelRanking,
 } from '@/src/services/modelService';
 
 /**
- * Build a strict `readable_id -> model_id` map from the dashboard-api
- * models list. No fuzzy fallback — the backend now owns this lookup
- * (frontend ticket #33, backend ticket #43).
+ * Normalise an id-like string for fuzzy matching: lower-case, drop non-alphanumerics.
+ * "Salesforce/moirai-1.1-R-small" -> "salesforcemoirai11rsmall"
+ * "moirai-small"                  -> "moiraismall"
+ */
+function norm(s: string | undefined | null): string {
+  return (s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Build a `readable_id -> model_id` map from the rankings response, using both
+ * the exact `readable_id` field (when present) and a normalised fallback over
+ * model_name. The fallback handles the case where the backend hasn't surfaced
+ * `readable_id` yet.
  */
 function buildReadableIdToModelId(
-  models: ModelListItem[],
+  rankings: ModelRanking[],
 ): Map<string, number> {
   const map = new Map<string, number>();
-  for (const m of models) {
-    if (m.readable_id) {
-      map.set(m.readable_id, m.id);
+  for (const r of rankings) {
+    if (r.readable_id) {
+      map.set(r.readable_id, r.model_id);
+      map.set(norm(r.readable_id), r.model_id);
+    }
+    if (r.model_name) {
+      // Allow a fuzzy lookup keyed on the model_name's normalised form.
+      // Loses to an exact readable_id match because we set readable_id last.
+      const key = norm(r.model_name);
+      if (!map.has(key)) map.set(key, r.model_id);
     }
   }
   return map;
@@ -41,28 +58,32 @@ export default function ModelFamilyPage() {
   const slug = params?.slug;
   const family = useMemo(() => (slug ? findFamily(slug) : null), [slug]);
 
-  const [models, setModels] = useState<ModelListItem[]>([]);
-  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [rankings, setRankings] = useState<ModelRanking[]>([]);
+  const [rankingsLoaded, setRankingsLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const fetchModels = async () => {
+    const fetchRankings = async () => {
       try {
-        const list = await getAllModels();
-        if (!cancelled) setModels(list);
+        // Default (no filter) — global rankings. Enough to resolve numeric
+        // model ids for every family member that has been evaluated.
+        const response = await getFilteredRankings();
+        if (!cancelled) {
+          setRankings(response.rankings ?? []);
+        }
       } catch (err) {
-        console.error('Error fetching models list:', err);
+        console.error('Error fetching rankings for model match:', err);
       } finally {
-        if (!cancelled) setModelsLoaded(true);
+        if (!cancelled) setRankingsLoaded(true);
       }
     };
-    fetchModels();
+    fetchRankings();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const idMap = useMemo(() => buildReadableIdToModelId(models), [models]);
+  const idMap = useMemo(() => buildReadableIdToModelId(rankings), [rankings]);
 
   if (!family) {
     if (slug !== undefined) notFound();
@@ -152,7 +173,9 @@ export default function ModelFamilyPage() {
 
             <ul className="space-y-3">
               {family.versions.map((version) => {
-                const modelId = idMap.get(version.readableId);
+                const modelId =
+                  idMap.get(version.readableId) ??
+                  idMap.get(norm(version.readableId));
                 const linked = typeof modelId === 'number';
                 const cardClass = linked
                   ? 'block bg-white border border-gray-200 rounded-md p-4 hover:border-blue-300 hover:shadow-sm transition-all'
@@ -179,7 +202,7 @@ export default function ModelFamilyPage() {
                           <ArrowRight className="w-4 h-4 text-blue-600" />
                         ) : (
                           <span className="text-xs text-gray-400 whitespace-nowrap">
-                            {modelsLoaded ? 'not registered' : '…'}
+                            {rankingsLoaded ? 'not yet ranked' : '…'}
                           </span>
                         )}
                       </div>
