@@ -29,6 +29,7 @@ export default function Home() {
     byFrequencyHorizon: {},
   });
   const [selectedCalculationDate, setSelectedCalculationDate] = useState<string>('');
+  const [selectedDefinitionId, setSelectedDefinitionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [oldestActiveRound, setOldestActiveRound] = useState<any>(null);
@@ -46,6 +47,10 @@ export default function Home() {
     label: formatCalculationDateLabel(item.calculation_date, item.is_month_end),
     value: item.calculation_date,
   }));
+
+  // "Rankings by Challenge" selector — default to the first available definition
+  const effectiveDefinitionId = selectedDefinitionId ?? filterOptions.definitions[0]?.id ?? null;
+  const selectedDefinition = filterOptions.definitions.find((d) => d.id === effectiveDefinitionId);
 
   // Format frequency_horizon for display (e.g., "00:15:00::1 day" -> "15min / 1 day")
   const formatFrequencyHorizon = (fh: string) => {
@@ -272,22 +277,33 @@ export default function Home() {
 
         {/* Rankings by Challenge Definition */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Challenge</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Rankings evaluated for each specific challenge definition.
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filterOptions.definitions.map((def) => (
-              <RankingTableElo
-                key={def.id}
-                rankings={rankingsData.byDefinition[def.id] || []}
-                compact
-                title={def.name}
-                limit={10}
-                definitionId={def.id}
-              />
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+            <h2 className="text-2xl font-semibold text-gray-900">Rankings by Challenge</h2>
+            <select
+              value={effectiveDefinitionId ?? ''}
+              onChange={(e) => setSelectedDefinitionId(Number(e.target.value))}
+              disabled={filterOptions.definitions.length === 0}
+              className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer max-w-full sm:max-w-sm disabled:opacity-50"
+            >
+              {filterOptions.definitions.map((def) => (
+                <option key={def.id} value={def.id}>
+                  {def.name}
+                </option>
+              ))}
+            </select>
           </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Rankings evaluated for the selected challenge definition.
+          </p>
+          {selectedDefinition ? (
+            <RankingTableElo
+              rankings={rankingsData.byDefinition[selectedDefinition.id] || []}
+              title={selectedDefinition.name}
+              definitionId={selectedDefinition.id}
+            />
+          ) : (
+            <p className="text-sm text-gray-500">No challenge definitions available.</p>
+          )}
         </div>
 
         {/* Rankings by Frequency/Horizon */}
