@@ -347,33 +347,37 @@ export default function Home() {
         <div className="mb-8">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
             <h2 className="text-2xl font-semibold text-gray-900">Rankings by Frequency & Horizon Combinations</h2>
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={effectiveFrequency ?? ''}
-                onChange={(e) => setSelectedFrequency(e.target.value)}
-                disabled={frequencyOptions.length === 0}
-                aria-label="Frequency"
-                className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
-              >
-                {frequencyOptions.map((f) => (
-                  <option key={f} value={f}>
-                    {formatFrequency(f)}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={effectiveHorizon ?? ''}
-                onChange={(e) => setSelectedHorizon(e.target.value)}
-                disabled={horizonOptions.length === 0}
-                aria-label="Horizon"
-                className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
-              >
-                {horizonOptions.map((h) => (
-                  <option key={h} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-1.5 text-sm text-gray-600">
+                <span>Frequency</span>
+                <select
+                  value={effectiveFrequency ?? ''}
+                  onChange={(e) => setSelectedFrequency(e.target.value)}
+                  disabled={frequencyOptions.length === 0}
+                  className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
+                >
+                  {frequencyOptions.map((f) => (
+                    <option key={f} value={f}>
+                      {formatFrequency(f)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-1.5 text-sm text-gray-600">
+                <span>Horizon</span>
+                <select
+                  value={effectiveHorizon ?? ''}
+                  onChange={(e) => setSelectedHorizon(e.target.value)}
+                  disabled={horizonOptions.length === 0}
+                  className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
+                >
+                  {horizonOptions.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           </div>
           <p className="text-sm text-gray-600 mb-4">
