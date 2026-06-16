@@ -298,6 +298,8 @@ export default function Home() {
           {selectedDefinition ? (
             <RankingTableElo
               rankings={rankingsData.byDefinition[selectedDefinition.id] || []}
+              compact
+              limit={10}
               title={selectedDefinition.name}
               definitionId={selectedDefinition.id}
             />
