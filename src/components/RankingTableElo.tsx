@@ -69,8 +69,13 @@ export default function RankingTableElo({
     router.push(`/models/${modelId}`);
   };
 
-  // Apply limit if specified
-  const displayedRankings = limit ? rankings.slice(0, limit) : rankings;
+  // Apply limit if specified. Memoize so the `data` reference passed to
+  // useReactTable is stable across renders — an unstable data ref each render
+  // makes react-table's auto-reset loop infinitely (freezing the page).
+  const displayedRankings = useMemo(
+    () => (limit ? rankings.slice(0, limit) : rankings),
+    [rankings, limit]
+  );
 
   const fullColumns = useMemo<ColumnDef<ModelRanking>[]>(
     () => [

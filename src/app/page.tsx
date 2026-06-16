@@ -297,6 +297,7 @@ export default function Home() {
           </p>
           {selectedDefinition ? (
             <RankingTableElo
+              key={selectedDefinition.id}
               rankings={rankingsData.byDefinition[selectedDefinition.id] || []}
               compact
               limit={10}
