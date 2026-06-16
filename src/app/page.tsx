@@ -30,6 +30,8 @@ export default function Home() {
   });
   const [selectedCalculationDate, setSelectedCalculationDate] = useState<string>('');
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<number | null>(null);
+  const [selectedFrequency, setSelectedFrequency] = useState<string | null>(null);
+  const [selectedHorizon, setSelectedHorizon] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [oldestActiveRound, setOldestActiveRound] = useState<any>(null);
@@ -72,6 +74,39 @@ export default function Home() {
     
     return `${freqStr} / ${horizon}`;
   };
+
+  // Format a bare frequency for display (e.g. "00:15:00" -> "15min", "01:00:00" -> "1h")
+  const formatFrequency = (freq: string) => {
+    const m = freq.match(/(\d+):(\d+):(\d+)/);
+    if (m) {
+      const hours = parseInt(m[1]);
+      const mins = parseInt(m[2]);
+      if (hours > 0) return `${hours}h`;
+      if (mins > 0) return `${mins}min`;
+    }
+    return freq;
+  };
+
+  // "Rankings by Frequency & Horizon" selectors — driven by the valid
+  // combinations the API returns in frequency_horizons (e.g. "00:15:00::1 day").
+  const fhCombos = filterOptions.frequency_horizons.map((fh) => {
+    const [frequency, horizon] = fh.split('::');
+    return { fh, frequency, horizon };
+  });
+  const frequencyOptions = [...new Set(fhCombos.map((c) => c.frequency))];
+  const effectiveFrequency = selectedFrequency ?? frequencyOptions[0] ?? null;
+  // Horizon options are constrained to those valid for the chosen frequency.
+  const horizonOptions = fhCombos
+    .filter((c) => c.frequency === effectiveFrequency)
+    .map((c) => c.horizon);
+  const effectiveHorizon =
+    selectedHorizon && horizonOptions.includes(selectedHorizon)
+      ? selectedHorizon
+      : horizonOptions[0] ?? null;
+  const selectedFh =
+    effectiveFrequency && effectiveHorizon
+      ? `${effectiveFrequency}::${effectiveHorizon}`
+      : null;
 
   useEffect(() => {
     setIsMounted(true);
@@ -310,21 +345,50 @@ export default function Home() {
 
         {/* Rankings by Frequency/Horizon */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Frequency & Horizon Combinations</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Rankings evaluated across different forecast frequency and horizon configurations.
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filterOptions.frequency_horizons.map((fh) => (
-              <RankingTableElo
-                key={fh}
-                rankings={rankingsData.byFrequencyHorizon[fh] || []}
-                compact
-                title={formatFrequencyHorizon(fh)}
-                limit={10}
-              />
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+            <h2 className="text-2xl font-semibold text-gray-900">Rankings by Frequency & Horizon Combinations</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={effectiveFrequency ?? ''}
+                onChange={(e) => setSelectedFrequency(e.target.value)}
+                disabled={frequencyOptions.length === 0}
+                aria-label="Frequency"
+                className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
+              >
+                {frequencyOptions.map((f) => (
+                  <option key={f} value={f}>
+                    {formatFrequency(f)}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={effectiveHorizon ?? ''}
+                onChange={(e) => setSelectedHorizon(e.target.value)}
+                disabled={horizonOptions.length === 0}
+                aria-label="Horizon"
+                className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
+              >
+                {horizonOptions.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Rankings for the selected forecast frequency / horizon combination.
+          </p>
+          {selectedFh ? (
+            <RankingTableElo
+              key={selectedFh}
+              rankings={rankingsData.byFrequencyHorizon[selectedFh] || []}
+              limit={10}
+              title={formatFrequencyHorizon(selectedFh)}
+            />
+          ) : (
+            <p className="text-sm text-gray-500">No frequency / horizon combinations available.</p>
+          )}
         </div>
       </main>
     </div>
