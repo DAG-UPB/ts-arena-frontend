@@ -12,3 +12,11 @@ export async function getDefinitionRounds(
   const response = await fetch(url);
   return response.json();
 }
+
+export async function getDefinitionSeries(
+  definitionId: number
+): Promise<import('@/src/types/challenge').DefinitionSeries[]> {
+  const response = await fetch(`/api/v1/definitions/${definitionId}/series`);
+  if (!response.ok) return [];
+  return response.json();
+}

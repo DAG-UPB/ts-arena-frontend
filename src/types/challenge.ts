@@ -97,6 +97,7 @@ export interface ChallengeDefinition {
   schedule_id: string;
   name: string;
   description: string;
+  display_text?: string | null;
   domain: string | null;
   subdomain: string | null;
   context_length: number;
@@ -105,6 +106,18 @@ export interface ChallengeDefinition {
   id: number;
   next_registration_start?: string | null;
   next_registration_end?: string | null;
+}
+
+export interface DefinitionSeries {
+  series_id: number;
+  name: string | null;
+  description: string | null;
+  display_text: string | null;
+  frequency: string | null;
+  unique_id: string | null;
+  domain: string | null;
+  category: string | null;
+  subcategory: string | null;
 }
 
 export interface ModelSeriesForecastPoint {

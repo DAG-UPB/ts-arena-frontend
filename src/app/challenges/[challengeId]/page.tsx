@@ -8,8 +8,9 @@ import RankingTableElo from '@/src/components/RankingTableElo';
 import Pagination from '@/src/components/Pagination';
 import DetailsCard from '@/src/components/DetailsCard';
 import ChallengeRoundsList from '@/src/components/ChallengeRoundsList';
-import type { ChallengeDefinition } from '@/src/types/challenge';
+import type { ChallengeDefinition, DefinitionSeries } from '@/src/types/challenge';
 import { getFilteredRankings, getRankingFilters, type RankingsResponse, type FilterOptions } from '@/src/services/modelService';
+import { getDefinitionSeries } from '@/src/services/definitionService';
 
 export default function ChallengeDefinitionDetail() {
   const params = useParams();
@@ -22,6 +23,8 @@ export default function ChallengeDefinitionDetail() {
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [rankingsPage, setRankingsPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [series, setSeries] = useState<DefinitionSeries[]>([]);
+  const [seriesLoading, setSeriesLoading] = useState(false);
 
   // Format calculation date for display
   const formatCalculationDateLabel = (dateStr: string, isMonthEnd: boolean) => {
@@ -122,6 +125,23 @@ export default function ChallengeDefinitionDetail() {
     setRankingsPage(1);
   }, [selectedCalculationDate]);
 
+  // Fetch the series that belong to this challenge definition
+  useEffect(() => {
+    const fetchSeries = async () => {
+      if (!definition?.id) return;
+      try {
+        setSeriesLoading(true);
+        const data = await getDefinitionSeries(definition.id);
+        setSeries(data);
+      } catch (err) {
+        console.error('Error fetching definition series:', err);
+      } finally {
+        setSeriesLoading(false);
+      }
+    };
+    fetchSeries();
+  }, [definition?.id]);
+
   // Rankings pagination calculations
   const RANKINGS_PER_PAGE = 10;
   const totalRankings = rankings?.rankings.length || 0;
@@ -170,6 +190,7 @@ export default function ChallengeDefinitionDetail() {
         title={definition.name}
         id={`Challenge ID: ${definition.id}`}
         description={definition.description}
+        displayText={definition.display_text}
         fields={[
           {
             label: 'Schedule ID',
@@ -206,6 +227,31 @@ export default function ChallengeDefinitionDetail() {
             : undefined
         }
       />
+
+      {/* Series Section */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Series in this Challenge</h2>
+        {seriesLoading ? (
+          <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
+            Loading series...
+          </div>
+        ) : series.length > 0 ? (
+          <div className="bg-white rounded-lg shadow-md overflow-hidden divide-y divide-gray-200">
+            {series.map((s) => (
+              <div key={s.series_id} className="px-6 py-4">
+                <div className="font-medium text-gray-900">{s.name}</div>
+                {s.display_text && (
+                  <div className="text-sm text-gray-600 mt-1">{s.display_text}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
+            No series found for this challenge.
+          </div>
+        )}
+      </div>
 
       {/* Rankings Section */}
       {definition && (
