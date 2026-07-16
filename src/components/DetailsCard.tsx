@@ -10,6 +10,7 @@ interface DetailsCardProps {
   title: string;
   id: string;
   description?: string;
+  displayText?: string | null;
   fields: DetailField[];
   registrationPeriod?: {
     start?: string;
@@ -17,12 +18,13 @@ interface DetailsCardProps {
   };
 }
 
-export default function DetailsCard({ 
-  title, 
+export default function DetailsCard({
+  title,
   id,
-  description, 
+  description,
+  displayText,
   fields,
-  registrationPeriod 
+  registrationPeriod
 }: DetailsCardProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -36,6 +38,13 @@ export default function DetailsCard({
       {description && (
         <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
           <p className="text-gray-700 leading-relaxed">{description}</p>
+        </div>
+      )}
+
+      {/* Long-form description (display_text) */}
+      {displayText && (
+        <div className="px-6 py-5 border-b border-gray-200">
+          <p className="text-gray-700 leading-relaxed whitespace-pre-line">{displayText}</p>
         </div>
       )}
 

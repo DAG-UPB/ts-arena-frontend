@@ -29,6 +29,9 @@ export default function Home() {
     byFrequencyHorizon: {},
   });
   const [selectedCalculationDate, setSelectedCalculationDate] = useState<string>('');
+  const [selectedDefinitionId, setSelectedDefinitionId] = useState<number | null>(null);
+  const [selectedFrequency, setSelectedFrequency] = useState<string | null>(null);
+  const [selectedHorizon, setSelectedHorizon] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [oldestActiveRound, setOldestActiveRound] = useState<any>(null);
@@ -46,6 +49,10 @@ export default function Home() {
     label: formatCalculationDateLabel(item.calculation_date, item.is_month_end),
     value: item.calculation_date,
   }));
+
+  // "Rankings by Challenge" selector — default to the first available definition
+  const effectiveDefinitionId = selectedDefinitionId ?? filterOptions.definitions[0]?.id ?? null;
+  const selectedDefinition = filterOptions.definitions.find((d) => d.id === effectiveDefinitionId);
 
   // Format frequency_horizon for display (e.g., "00:15:00::1 day" -> "15min / 1 day")
   const formatFrequencyHorizon = (fh: string) => {
@@ -67,6 +74,39 @@ export default function Home() {
     
     return `${freqStr} / ${horizon}`;
   };
+
+  // Format a bare frequency for display (e.g. "00:15:00" -> "15min", "01:00:00" -> "1h")
+  const formatFrequency = (freq: string) => {
+    const m = freq.match(/(\d+):(\d+):(\d+)/);
+    if (m) {
+      const hours = parseInt(m[1]);
+      const mins = parseInt(m[2]);
+      if (hours > 0) return `${hours}h`;
+      if (mins > 0) return `${mins}min`;
+    }
+    return freq;
+  };
+
+  // "Rankings by Frequency & Horizon" selectors — driven by the valid
+  // combinations the API returns in frequency_horizons (e.g. "00:15:00::1 day").
+  const fhCombos = filterOptions.frequency_horizons.map((fh) => {
+    const [frequency, horizon] = fh.split('::');
+    return { fh, frequency, horizon };
+  });
+  const frequencyOptions = [...new Set(fhCombos.map((c) => c.frequency))];
+  const effectiveFrequency = selectedFrequency ?? frequencyOptions[0] ?? null;
+  // Horizon options are constrained to those valid for the chosen frequency.
+  const horizonOptions = fhCombos
+    .filter((c) => c.frequency === effectiveFrequency)
+    .map((c) => c.horizon);
+  const effectiveHorizon =
+    selectedHorizon && horizonOptions.includes(selectedHorizon)
+      ? selectedHorizon
+      : horizonOptions[0] ?? null;
+  const selectedFh =
+    effectiveFrequency && effectiveHorizon
+      ? `${effectiveFrequency}::${effectiveHorizon}`
+      : null;
 
   useEffect(() => {
     setIsMounted(true);
@@ -272,41 +312,87 @@ export default function Home() {
 
         {/* Rankings by Challenge Definition */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Challenge</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Rankings evaluated for each specific challenge definition.
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filterOptions.definitions.map((def) => (
-              <RankingTableElo
-                key={def.id}
-                rankings={rankingsData.byDefinition[def.id] || []}
-                compact
-                title={def.name}
-                limit={10}
-                definitionId={def.id}
-              />
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+            <h2 className="text-2xl font-semibold text-gray-900">Rankings by Challenge</h2>
+            <select
+              value={effectiveDefinitionId ?? ''}
+              onChange={(e) => setSelectedDefinitionId(Number(e.target.value))}
+              disabled={filterOptions.definitions.length === 0}
+              className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer max-w-full sm:max-w-sm disabled:opacity-50"
+            >
+              {filterOptions.definitions.map((def) => (
+                <option key={def.id} value={def.id}>
+                  {def.name}
+                </option>
+              ))}
+            </select>
           </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Rankings evaluated for the selected challenge definition.
+          </p>
+          {selectedDefinition ? (
+            <RankingTableElo
+              key={selectedDefinition.id}
+              rankings={rankingsData.byDefinition[selectedDefinition.id] || []}
+              limit={10}
+              title={selectedDefinition.name}
+              definitionId={selectedDefinition.id}
+            />
+          ) : (
+            <p className="text-sm text-gray-500">No challenge definitions available.</p>
+          )}
         </div>
 
         {/* Rankings by Frequency/Horizon */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Rankings by Frequency & Horizon Combinations</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Rankings evaluated across different forecast frequency and horizon configurations.
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filterOptions.frequency_horizons.map((fh) => (
-              <RankingTableElo
-                key={fh}
-                rankings={rankingsData.byFrequencyHorizon[fh] || []}
-                compact
-                title={formatFrequencyHorizon(fh)}
-                limit={10}
-              />
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+            <h2 className="text-2xl font-semibold text-gray-900">Rankings by Frequency & Horizon Combinations</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-1.5 text-sm text-gray-600">
+                <span>Frequency</span>
+                <select
+                  value={effectiveFrequency ?? ''}
+                  onChange={(e) => setSelectedFrequency(e.target.value)}
+                  disabled={frequencyOptions.length === 0}
+                  className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
+                >
+                  {frequencyOptions.map((f) => (
+                    <option key={f} value={f}>
+                      {formatFrequency(f)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-1.5 text-sm text-gray-600">
+                <span>Horizon</span>
+                <select
+                  value={effectiveHorizon ?? ''}
+                  onChange={(e) => setSelectedHorizon(e.target.value)}
+                  disabled={horizonOptions.length === 0}
+                  className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
+                >
+                  {horizonOptions.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Rankings for the selected forecast frequency / horizon combination.
+          </p>
+          {selectedFh ? (
+            <RankingTableElo
+              key={selectedFh}
+              rankings={rankingsData.byFrequencyHorizon[selectedFh] || []}
+              limit={10}
+              title={formatFrequencyHorizon(selectedFh)}
+            />
+          ) : (
+            <p className="text-sm text-gray-500">No frequency / horizon combinations available.</p>
+          )}
         </div>
       </main>
     </div>

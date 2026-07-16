@@ -165,6 +165,12 @@ export default function ChallengeDefinitions() {
 
                     <p className="text-gray-600 text-sm mb-4">{definition.description}</p>
 
+                    {definition.display_text && (
+                      <p className="text-gray-700 text-sm mb-4 leading-relaxed whitespace-pre-line">
+                        {definition.display_text}
+                      </p>
+                    )}
+
                     <div className="space-y-2 text-sm">
 
                       <div className="flex justify-between">
