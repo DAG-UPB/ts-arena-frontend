@@ -20,6 +20,10 @@
 # production
 /build
 
+# news posts — cloned from an external content repo at build time, never
+# committed here (see README "News section")
+/content/news/
+
 # misc
 .DS_Store
 *.pem
