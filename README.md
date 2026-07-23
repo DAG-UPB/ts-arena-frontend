@@ -17,6 +17,25 @@ TS-Arena is a live forecasting benchmarking platform designed for **pre-register
 
 For more information visit our [Git repository](https://github.com/DAG-UPB/ts-arena) or have a look at our paper at [arxiv.org/abs/2512.20761](https://arxiv.org/abs/2512.20761).
 
+## Build paths
+
+This repository is built two different ways, and anything build-related has to keep
+working under both:
+
+| Path | Used by | Build | Start |
+|---|---|---|---|
+| `Dockerfile` | the Hugging Face Space (`sdk: docker` above, pushed by `.github/workflows/main.yml` on every `main` push) | `npm run build` with `NEXT_OUTPUT_STANDALONE=1` | `node server.js` on port 3000 |
+| Nixpacks | the Coolify apps (dev and prod) | `npm run build` | `npm start` → `next start` on `$PORT` |
+
+Nixpacks never reads the `Dockerfile`, so the two paths share only what the npm scripts
+do. That is why `scripts/fetch-news.mjs` hangs off the `prebuild` hook instead of living
+in the `Dockerfile` — put a build step in an npm script and both paths get it.
+
+`output: "standalone"` in `next.config.ts` is opt-in through `NEXT_OUTPUT_STANDALONE`,
+which only the `Dockerfile` sets. It produces the slim `.next/standalone` bundle that the
+image runs; `next start` cannot serve that bundle, so the Nixpacks path must be built
+without it.
+
 ## News section
 
 `/news` renders platform announcements from Markdown files in `content/news/`. That
