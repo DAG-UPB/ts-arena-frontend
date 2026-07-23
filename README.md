@@ -25,15 +25,25 @@ repo when the image is built, so an instance you run does not inherit TS-Arena's
 announcements. With no content repo configured, the directory stays empty and the News
 tab does not appear.
 
-Point a build at a content repo with two build args:
+Point a build at a content repo with two **build-time environment variables**:
 
-| Build arg | Default | Meaning |
+| Variable | Default | Meaning |
 |---|---|---|
 | `NEWS_CONTENT_REPO` | *(empty)* | Clone URL of the content repo. Empty = no news section. |
 | `NEWS_CONTENT_REF` | `main` | Branch or tag to clone. |
 
-Use a **public** repo: build args are recorded in the image history, so a URL carrying an
-access token would be readable by anyone who can pull the image.
+The clone is done by `scripts/fetch-news.mjs`, wired up as the `prebuild` npm script so it
+runs on every `npm run build`. That is deliberate: the Coolify apps build with Nixpacks,
+which never reads the `Dockerfile`, and `prebuild` is the one hook both build paths share.
+On Coolify these must be marked as **build variables**, not just runtime env vars, or the
+build will not see them.
+
+Use a **public** repo: with a Docker build these arrive as build args, which are recorded
+in the image history, so a URL carrying an access token would be readable by anyone who
+can pull the image.
+
+A clone failure fails the build rather than silently shipping a site with no
+announcements.
 
 The content repo is just Markdown files at its root, one per post. The file name is the
 URL slug (`elo-to-arena-score.md` → `/news/elo-to-arena-score`):

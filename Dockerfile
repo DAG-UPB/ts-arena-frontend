@@ -28,20 +28,16 @@ COPY . .
 # a separate content repository so that anyone running their own TS-Arena does
 # not inherit ours. Set NEWS_CONTENT_REPO to a clone URL to bake that repo's
 # `*.md` files into the image; leave it unset and the /news section simply
-# does not appear.
+# does not appear. The clone itself is done by the `prebuild` npm script, so
+# that Nixpacks builds (which never read this Dockerfile) behave identically.
 #
 # Use a public repo: build args are recorded in the image history, so a URL
 # carrying an access token would leak to anyone who can pull the image.
 ARG NEWS_CONTENT_REPO=
 ARG NEWS_CONTENT_REF=main
-RUN if [ -n "$NEWS_CONTENT_REPO" ]; then \
-      apk add --no-cache git && \
-      rm -rf content/news && \
-      git clone --depth 1 --branch "$NEWS_CONTENT_REF" "$NEWS_CONTENT_REPO" content/news && \
-      rm -rf content/news/.git; \
-    else \
-      mkdir -p content/news; \
-    fi
+ENV NEWS_CONTENT_REPO=$NEWS_CONTENT_REPO
+ENV NEWS_CONTENT_REF=$NEWS_CONTENT_REF
+RUN apk add --no-cache git
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
