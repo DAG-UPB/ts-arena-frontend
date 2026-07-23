@@ -57,6 +57,13 @@ function readPosts(): NewsPost[] {
       continue;
     }
 
+    // Drafts stay in the content repo but never reach the site. Not rendered
+    // and not routed, so there is no unlisted URL to stumble onto either.
+    if (data.draft === true) {
+      console.log(`[news] skipping draft content/news/${fileName}`);
+      continue;
+    }
+
     posts.push({
       slug,
       title,

@@ -38,9 +38,12 @@ which never reads the `Dockerfile`, and `prebuild` is the one hook both build pa
 On Coolify these must be marked as **build variables**, not just runtime env vars, or the
 build will not see them.
 
-Use a **public** repo: with a Docker build these arrive as build args, which are recorded
-in the image history, so a URL carrying an access token would be readable by anyone who
-can pull the image.
+For a **private** content repo, put an access token in the URL
+(`https://<token>@github.com/<org>/<repo>.git`). Note that the token is then recorded in
+the built image. TS-Arena's own deployment accepts that: the images never leave internal
+hosts, and anyone with Docker access there can read the content repo anyway. If you run
+an instance where that is not true, use a public repo or a read-only token you are willing
+to rotate.
 
 A clone failure fails the build rather than silently shipping a site with no
 announcements.
@@ -54,6 +57,7 @@ title: Ranking switches from Elo to Arena Score
 date: 2026-07-23
 summary: Optional one-line teaser shown in the listing.
 author: Optional byline
+draft: true
 ---
 
 Body in Markdown. Headings, lists, links, tables, code and block quotes are styled.
@@ -61,6 +65,12 @@ Body in Markdown. Headings, lists, links, tables, code and block quotes are styl
 
 `title` and `date` are required; a post missing either is skipped with a build warning.
 Posts are listed newest first by `date`.
+
+`draft: true` keeps a post out of the build entirely — no page, no route, no listing entry
+— so unfinished posts can sit in the content repo next to the published ones. Drop the
+line (or set it to `false`) to publish on the next redeploy. The draft's Markdown file is
+still copied into the image, it is just never rendered or routed; treat drafts as hidden
+from site visitors, not as a secret from anyone who can read the image.
 
 Publishing a post is a push to the content repo followed by a redeploy of the frontend —
 the Markdown is baked into the image, so a rebuild is what makes a new post appear.

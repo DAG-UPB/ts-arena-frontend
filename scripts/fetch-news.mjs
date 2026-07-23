@@ -10,6 +10,10 @@
  *   NEWS_CONTENT_REPO   clone URL of the content repo (unset = no news)
  *   NEWS_CONTENT_REF    branch or tag to clone (default: main)
  *
+ * For a private repo, put the access token in the URL. TS-Arena's own deploys
+ * are internal-only and anyone with Docker access on those hosts can read the
+ * content repo anyway, so the token ending up in the image is acceptable there.
+ *
  * Deliberately lives in npm-script land rather than in the Dockerfile: the
  * Coolify apps build with Nixpacks, which never reads the Dockerfile. Hooking
  * into `prebuild` is the one place both build paths go through.
@@ -30,8 +34,6 @@ if (!repo) {
   process.exit(0);
 }
 
-// Never print `repo` itself: if someone ignores the advice and uses a URL with
-// an embedded token, it must not end up in the build log.
 console.log(`[news] cloning news content (ref: ${ref})`);
 
 // Clone into a staging directory and only swap it in once it succeeds, so a
@@ -44,6 +46,8 @@ fs.mkdirSync(path.dirname(TARGET), { recursive: true });
 try {
   execFileSync('git', ['clone', '--depth', '1', '--branch', ref, repo, staging], {
     stdio: ['ignore', 'inherit', 'pipe'],
+    // Bad credentials should fail the build, not hang it on a username prompt.
+    env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
   });
 } catch (err) {
   // Fail the build loudly. A silent fallback to "no news" would ship a site
