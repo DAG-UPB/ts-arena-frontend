@@ -38,6 +38,12 @@ ENV NEWS_CONTENT_REPO=$NEWS_CONTENT_REPO
 ENV NEWS_CONTENT_REF=$NEWS_CONTENT_REF
 RUN apk add --no-cache git
 
+# The runner stage below serves the slim `.next/standalone` bundle, which only
+# exists when next.config.ts switches `output` to "standalone". That is opt-in
+# because the other build path (Nixpacks, used by the Coolify apps) starts the
+# app with `next start`, which cannot serve a standalone build.
+ENV NEXT_OUTPUT_STANDALONE=1
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
