@@ -22,6 +22,12 @@ import type { NewsPost } from './types';
  */
 const NEWS_DIR = path.join(process.cwd(), 'content', 'news');
 
+/**
+ * Files the content repo keeps at its root for its own sake, not as posts.
+ * Without this they get parsed as candidate posts and warn on every build.
+ */
+const NOT_POSTS = new Set(['readme.md', 'claude.md', 'license.md', 'contributing.md']);
+
 function readPosts(): NewsPost[] {
   let fileNames: string[];
   try {
@@ -35,6 +41,7 @@ function readPosts(): NewsPost[] {
 
   for (const fileName of fileNames) {
     if (!fileName.endsWith('.md') || fileName.startsWith('.')) continue;
+    if (NOT_POSTS.has(fileName.toLowerCase())) continue;
 
     const slug = fileName.replace(/\.md$/, '');
     const raw = fs.readFileSync(path.join(NEWS_DIR, fileName), 'utf8');
