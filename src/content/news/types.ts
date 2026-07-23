@@ -7,13 +7,16 @@
  * date: 2026-07-23
  * summary: One-line teaser shown in the listing.
  * author: TS-Arena Team
+ * draft: true
  * ---
  *
  * Body in Markdown…
  * ```
  *
  * `title` and `date` are required; a post missing either is skipped with a
- * build-time warning rather than breaking the build.
+ * build-time warning rather than breaking the build. `draft: true` keeps a
+ * post out of the build entirely, so unpublished work can live in the content
+ * repo alongside what is live.
  */
 export interface NewsPostMetadata {
   /** URL slug — derived from the file name (sans `.md`). */

@@ -30,9 +30,8 @@ COPY . .
 # `*.md` files into the image; leave it unset and the /news section simply
 # does not appear. The clone itself is done by the `prebuild` npm script, so
 # that Nixpacks builds (which never read this Dockerfile) behave identically.
-#
-# Use a public repo: build args are recorded in the image history, so a URL
-# carrying an access token would leak to anyone who can pull the image.
+# For a private repo the URL carries a token — see the README for what that
+# means for the built image.
 ARG NEWS_CONTENT_REPO=
 ARG NEWS_CONTENT_REF=main
 ENV NEWS_CONTENT_REPO=$NEWS_CONTENT_REPO
