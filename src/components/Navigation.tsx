@@ -4,7 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siGithub } from 'simple-icons/icons';
 
-export default function Navigation() {
+interface NavigationProps {
+  /**
+   * Whether this instance has any news posts. Resolved on the server in the
+   * root layout — posts come from an external content repo that a fork may
+   * not have, and an empty "News" tab is worse than no tab.
+   */
+  showNews?: boolean;
+}
+
+export default function Navigation({ showNews = false }: NavigationProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -13,6 +22,7 @@ export default function Navigation() {
     { href: '/models', label: 'Models' },
     { href: '/add-model', label: 'Add Model' },
     { href: '/backtesting-archive', label: 'Backtesting Archive' },
+    ...(showNews ? [{ href: '/news', label: 'News' }] : []),
     { href: '/about', label: 'About' },
   ];
 

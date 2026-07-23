@@ -24,6 +24,25 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# News posts (the /news section) are not checked into this repo — they live in
+# a separate content repository so that anyone running their own TS-Arena does
+# not inherit ours. Set NEWS_CONTENT_REPO to a clone URL to bake that repo's
+# `*.md` files into the image; leave it unset and the /news section simply
+# does not appear.
+#
+# Use a public repo: build args are recorded in the image history, so a URL
+# carrying an access token would leak to anyone who can pull the image.
+ARG NEWS_CONTENT_REPO=
+ARG NEWS_CONTENT_REF=main
+RUN if [ -n "$NEWS_CONTENT_REPO" ]; then \
+      apk add --no-cache git && \
+      rm -rf content/news && \
+      git clone --depth 1 --branch "$NEWS_CONTENT_REF" "$NEWS_CONTENT_REPO" content/news && \
+      rm -rf content/news/.git; \
+    else \
+      mkdir -p content/news; \
+    fi
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
@@ -48,6 +67,9 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
+# The news Markdown is also read at request time (the root layout decides
+# whether to show the News tab), so it has to exist in the runtime image too.
+COPY --from=builder /app/content ./content
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
