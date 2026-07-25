@@ -43,7 +43,7 @@ export default function RootLayout({
             server) loads the script but reports nothing. */}
         <script
           defer
-          src="https://umami.ts-arena.live/script.js"
+          src="https://edge.ts-arena.live/t.js"
           data-website-id="cc85b0fc-786f-44ec-8445-b4ee463f63f6"
           data-domains="ts-arena.live,dashboard.dev.ts-arena.live"
         />
