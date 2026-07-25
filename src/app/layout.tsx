@@ -38,6 +38,15 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        {/* Self-hosted Umami on franzia. data-domains is an allowlist: any other
+            host serving this build (the Hugging Face Space mirror, a local dev
+            server) loads the script but reports nothing. */}
+        <script
+          defer
+          src="https://edge.ts-arena.live/t.js"
+          data-website-id="cc85b0fc-786f-44ec-8445-b4ee463f63f6"
+          data-domains="ts-arena.live"
+        />
       </body>
     </html>
   );

@@ -19,6 +19,12 @@ export default function Footer() {
             >
               Impressum/Legal Notice
             </Link>
+            <Link
+              href="/datenschutz"
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Datenschutz/Privacy Policy
+            </Link>
           </div>
         </div>
       </div>
