@@ -87,23 +87,16 @@ export default function DatenschutzPage() {
 
               <p className="leading-relaxed mt-3">
                 <strong>Umgang mit der IP-Adresse:</strong> Ihre IP-Adresse wird beim Empfang eines
-                Seitenaufrufs für zwei Zwecke verarbeitet: zur Ableitung des ungefähren Standorts und als
-                ein Bestandteil eines gesalzenen Hashwerts (gebildet aus Website-Kennung, IP-Adresse,
-                Browserkennung und einem wechselnden Zufallswert), aus dem die pseudonyme Besucherkennung
-                entsteht. Danach wird sie verworfen. <strong>Die IP-Adresse wird nicht in der Datenbank
-                gespeichert</strong> und ist aus den gespeicherten Daten nicht rekonstruierbar. Der
-                Zufallswert wechselt monatlich; nach diesem Wechsel lassen sich frühere und spätere Besuche
-                derselben Person nicht mehr miteinander verknüpfen.
-              </p>
-              <p className="leading-relaxed mt-3">
-                Für uns ist ausschließlich die Verteilung auf Länderebene von Interesse. Die eingesetzte
-                Software leitet aus der IP-Adresse jedoch auch Region und Stadt ab und speichert diese
-                Angaben; wir weisen darauf hin, statt diesen Umstand zu verschweigen.
+                Seitenaufrufs für zwei Zwecke verarbeitet: zur Ableitung des ungefähren Standorts und zur
+                Bildung der pseudonymen Besucherkennung. Danach wird sie verworfen. <strong>Die IP-Adresse
+                wird nicht in der Datenbank gespeichert</strong> und ist aus den gespeicherten Daten nicht
+                rekonstruierbar. Die Besucherkennung wird monatlich neu gebildet; danach lassen sich frühere
+                und spätere Besuche derselben Person nicht mehr miteinander verknüpfen.
               </p>
               <p className="leading-relaxed mt-3">
                 <strong>Zweck</strong> ist die statistische Auswertung der Nutzung, um zu verstehen, welche
-                Inhalte genutzt werden und wo die Plattform eingesetzt wird, und um die Website darauf
-                aufbauend zu verbessern. <strong>Rechtsgrundlage</strong> ist Art. 6 Abs. 1 lit. f DSGVO;
+                Inhalte genutzt werden und in welchen Regionen die Plattform eingesetzt wird, und um die
+                Website darauf aufbauend zu verbessern. <strong>Rechtsgrundlage</strong> ist Art. 6 Abs. 1 lit. f DSGVO;
                 unser berechtigtes Interesse liegt in der bedarfsgerechten Gestaltung dieser Website. Eine
                 Profilbildung oder eine Zusammenführung mit anderen Datenquellen findet nicht statt.
               </p>
@@ -132,8 +125,7 @@ export default function DatenschutzPage() {
                 Diese Website enthält keine Formulare. Wer mit einem eigenen Modell am Benchmark teilnehmen
                 möchte, tut dies über unser API-Portal beziehungsweise über die im Bereich „Add Model“
                 genannten Wege. Dabei verarbeiten wir die von Ihnen angegebenen Daten: Benutzername,
-                E-Mail-Adresse und Organisation sowie einen technischen Zugriffsschlüssel, dazu die von
-                Ihnen übermittelten Modellangaben und Prognosen.
+                E-Mail-Adresse und Organisation sowie einen technischen Zugriffsschlüssel.
               </p>
               <p className="leading-relaxed mt-3">
                 Diese Daten dienen ausschließlich der Durchführung des Benchmarks. Modellname und
@@ -258,21 +250,15 @@ export default function DatenschutzPage() {
 
                 <p className="leading-relaxed mt-3">
                   <strong>How your IP address is handled:</strong> on receipt of a page view your IP address
-                  is processed for two purposes: to derive the approximate location, and as one component of
-                  a salted hash (formed from the website identifier, the IP address, the browser identifier
-                  and a rotating random value) that produces the pseudonymous visitor identifier. It is then
-                  discarded. <strong>The IP address is never written to the database</strong> and cannot be
-                  reconstructed from the stored data. The random value rotates monthly; after it rotates,
-                  earlier and later visits by the same person can no longer be linked.
-                </p>
-                <p className="leading-relaxed mt-3">
-                  We are only interested in the distribution by country. The software does, however, also
-                  derive region and city from the IP address and stores them; we state this rather than leave
-                  it out.
+                  is processed for two purposes: to derive the approximate location, and to form the
+                  pseudonymous visitor identifier. It is then discarded. <strong>The IP address is never
+                  written to the database</strong> and cannot be reconstructed from the stored data. The
+                  visitor identifier is formed anew each month; after that, earlier and later visits by the
+                  same person can no longer be linked.
                 </p>
                 <p className="leading-relaxed mt-3">
                   The <strong>purpose</strong> is statistical analysis of usage, to understand which content
-                  is used and where the platform is used, and to improve the website accordingly. The{' '}
+                  is used and in which regions the platform is used, and to improve the website accordingly. The{' '}
                   <strong>legal basis</strong> is Art. 6(1)(f) GDPR; our legitimate interest is designing
                   this website to meet actual demand. No profiling takes place and the data is not combined
                   with other sources.
@@ -299,8 +285,7 @@ export default function DatenschutzPage() {
                 <p className="leading-relaxed">
                   This website contains no forms. To enter your own model into the benchmark you use our API
                   portal or the routes described under &ldquo;Add Model&rdquo;. In doing so we process the data you
-                  provide: user name, email address and organisation, together with a technical access key,
-                  as well as the model information and forecasts you submit.
+                  provide: user name, email address and organisation, together with a technical access key.
                 </p>
                 <p className="leading-relaxed mt-3">
                   This data is used solely to operate the benchmark. Model names and results are published on
