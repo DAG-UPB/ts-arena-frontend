@@ -180,9 +180,9 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
                           }
                           return (
                             <td key={seriesId} className="px-2 py-2 sm:px-3 sm:py-3 text-center">
-                              <span 
+                              <span
                                 className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                                  rankData.rank === 1 
+                                  rankData.rank === 1
                                     ? 'bg-yellow-100 text-yellow-800'
                                     : rankData.rank === 2
                                     ? 'bg-gray-200 text-gray-800'
@@ -193,6 +193,12 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
                                 title={rankData.mase !== null ? `MASE: ${rankData.mase.toFixed(4)}` : 'MASE: N/A'}
                               >
                                 {rankData.rank}
+                              </span>
+                              {/* `title` above is invisible on touch — mirror the MASE
+                                  value as visible text on small screens, where the
+                                  hover tooltip can never be reached. */}
+                              <span className="sm:hidden mt-0.5 block text-[10px] leading-none text-gray-500">
+                                {rankData.mase !== null ? rankData.mase.toFixed(3) : 'N/A'}
                               </span>
                             </td>
                           );

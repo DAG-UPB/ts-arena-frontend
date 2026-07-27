@@ -127,7 +127,7 @@ export default function ChallengeDefinitions() {
           id="groupBy"
           value={groupBy}
           onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
-          className="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+          className="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base sm:text-sm"
         >
           <option value="none">None</option>
           <option value="frequency">Frequency</option>

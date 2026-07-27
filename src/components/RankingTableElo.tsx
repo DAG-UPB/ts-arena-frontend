@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -33,7 +34,7 @@ function TextSearchFilter({ column }: { column: any }) {
         value={filterValue}
         onChange={(e) => column.setFilterValue(e.target.value || undefined)}
         placeholder="Search..."
-        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        className="w-full px-2 py-1.5 text-base sm:text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
     </div>
   );
@@ -50,7 +51,7 @@ function NumberMaxFilter({ column }: { column: any }) {
         value={filterValue}
         onChange={(e) => column.setFilterValue(e.target.value ? Number(e.target.value) : undefined)}
         placeholder="Max (M)..."
-        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        className="w-full px-2 py-1.5 text-base sm:text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
     </div>
   );
@@ -164,12 +165,26 @@ export default function RankingTableElo({
         header: () => (
           <div className="flex items-center gap-1.5 normal-case">
             <span>Model Size</span>
-            <div className="relative group">
-              <Info className="w-4 h-4 text-gray-400 cursor-help" />
-              <div className="absolute right-0 top-6 w-48 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                Model sizes are shown in million parameters
-              </div>
-            </div>
+            <Popover className="relative group" onClick={(e) => e.stopPropagation()}>
+              {({ open }) => (
+                <>
+                  <PopoverButton
+                    className="flex items-center justify-center w-11 h-11 -m-[14px] rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                    aria-label="About model size"
+                  >
+                    <Info className="w-4 h-4" aria-hidden="true" />
+                  </PopoverButton>
+                  <PopoverPanel
+                    static
+                    className={`absolute right-0 top-6 w-48 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg transition-all duration-200 z-10 normal-case font-normal ${
+                      open ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                    }`}
+                  >
+                    Model sizes are shown in million parameters
+                  </PopoverPanel>
+                </>
+              )}
+            </Popover>
           </div>
         ),
         filterFn: (row, columnId, filterValue) => {
