@@ -106,7 +106,7 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-      <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+      <div className="px-4 sm:px-6 py-5 border-b border-gray-200 bg-gray-50">
         <h2 className="text-xl font-bold text-gray-900">Challenge Rounds</h2>
         <p className="mt-1 text-sm text-gray-500">
           All rounds associated with this challenge, grouped by status
@@ -161,14 +161,14 @@ export default function ChallengeRoundsList({ definitionId, challengeId }: Chall
               {isExpanded && (
                 <div className="overflow-x-auto">
                   {isLoading ? (
-                    <div className="px-6 py-8 flex items-center justify-center">
+                    <div className="px-4 sm:px-6 py-8 flex items-center justify-center">
                       <div className="flex items-center gap-3 text-gray-500">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                         <span>Loading rounds...</span>
                       </div>
                     </div>
                   ) : totalRounds === 0 ? (
-                    <div className="px-6 py-8 text-center text-gray-500">
+                    <div className="px-4 sm:px-6 py-8 text-center text-gray-500">
                       No rounds available for this status
                     </div>
                   ) : (

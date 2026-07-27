@@ -32,7 +32,7 @@ export default function NewsPage() {
             {posts.map((post) => (
               <article
                 key={post.slug}
-                className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 hover:border-gray-300 transition-colors"
+                className="bg-white shadow-sm rounded-lg border border-gray-200 p-4 sm:p-6 hover:border-gray-300 transition-colors"
               >
                 <time dateTime={post.date} className="text-sm text-gray-500">
                   {formatPostDate(post.date)}

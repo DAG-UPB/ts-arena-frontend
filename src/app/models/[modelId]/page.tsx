@@ -49,7 +49,7 @@ export default function ModelDetailPage() {
   }, [modelId]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <Breadcrumbs 
           items={[
@@ -59,7 +59,7 @@ export default function ModelDetailPage() {
         />
 
         {loading ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 text-center">
             <div className="text-lg text-gray-600">Loading model details...</div>
           </div>
         ) : modelDetails ? (
@@ -103,7 +103,7 @@ export default function ModelDetailPage() {
               modelDetails.repo_url ||
               modelDetails.website_url ||
               modelDetails.arxiv_id) && (
-              <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+              <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mt-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-3">Resources</h2>
                 <div className="flex flex-wrap gap-2">
                   {modelDetails.paper_url && (
@@ -151,7 +151,7 @@ export default function ModelDetailPage() {
             )}
           </>
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 text-center">
             <div className="text-lg text-gray-600">Failed to load model details.</div>
           </div>
         )}
@@ -160,7 +160,7 @@ export default function ModelDetailPage() {
           <ModelActiveRounds rounds={activeRoundsData.rounds} />
         )}
 
-        <div className="bg-white rounded-lg shadow-md p-8 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 mb-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">Ranking Performance Over Time</h2>
           <p className="text-sm text-gray-600 mb-6">
             ELO score evolution across all challenges, individual challenge definitions, and frequency/horizon combinations. Forecasts are evaluated hourly; standings shown here are aggregated and reported monthly.
@@ -180,13 +180,13 @@ export default function ModelDetailPage() {
 
         <div>
           {loading ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 text-center">
               <div className="text-lg text-gray-600">Loading series data...</div>
             </div>
           ) : seriesData ? (
             <ModelSeriesList definitions={seriesData.definitions} modelId={modelId} />
           ) : (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 text-center">
               <div className="text-lg text-gray-600">Failed to load series data.</div>
             </div>
           )}

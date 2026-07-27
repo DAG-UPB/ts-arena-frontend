@@ -6,13 +6,97 @@ import Link from 'next/link';
 import type { PlotParams } from 'react-plotly.js';
 import type { ForecastsResponse, ForecastData, Model } from '@/src/types/challenge';
 import { getChallengeSeries, getSeriesData, getSeriesForecasts, getRoundModels } from '@/src/services/roundService';
+import { useIsMobile } from '@/src/hooks/useIsMobile';
+import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
 import humanizeDuration from 'humanize-duration';
 import { parse, toSeconds } from 'iso8601-duration';
 import wrap from 'word-wrap';
 
 
-// Dynamically import Plotly to avoid SSR issues
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+// Dynamically import Plotly to avoid SSR issues. `PlotlyPlot` is the app's
+// single Plotly entry point — see the note there on why it is not
+// `react-plotly.js` directly.
+const Plot = dynamic(() => import('@/src/components/PlotlyPlot'), { ssr: false });
+
+// One row of the mobile legend. `key` is already namespaced per series.
+interface LegendEntry {
+  key: string;
+  label: string;
+  detail?: string;
+  color: string;
+  dashed: boolean;
+  visible: boolean;
+}
+
+/**
+ * Mobile replacement for Plotly's built-in legend.
+ *
+ * Plotly's legend is laid out in axis fractions, which at phone widths turns
+ * into a 200px-wide, 1400px-tall box sitting on top of the plot. Rendering the
+ * same information as HTML below the chart lets it wrap, scroll and take a
+ * proper 44px touch target per row.
+ */
+function MobilePlotLegend({
+  entries,
+  onToggle,
+}: {
+  entries: LegendEntry[];
+  onToggle: (key: string, visible: boolean) => void;
+}) {
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden bg-white">
+      <div className="flex items-baseline justify-between gap-2 px-3 py-2 bg-gray-50 border-b border-gray-200">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Series
+        </span>
+        <span className="text-xs text-gray-400">Tap to show or hide</span>
+      </div>
+      <ul className="divide-y divide-gray-100">
+        {entries.map((entry) => (
+          <li key={entry.key}>
+            <button
+              type="button"
+              aria-pressed={entry.visible}
+              onClick={() => onToggle(entry.key, !entry.visible)}
+              className={`flex w-full min-h-[44px] items-center gap-3 px-3 py-2 text-left transition-colors active:bg-gray-100 ${
+                entry.visible ? '' : 'opacity-40'
+              }`}
+            >
+              <svg
+                width="20"
+                height="8"
+                viewBox="0 0 20 8"
+                aria-hidden="true"
+                className="shrink-0"
+              >
+                <line
+                  x1="1"
+                  y1="4"
+                  x2="19"
+                  y2="4"
+                  stroke={entry.color}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray={entry.dashed ? '5 3' : undefined}
+                />
+              </svg>
+              <span className="min-w-0 flex-1 break-words text-sm text-gray-900">
+                {entry.label}
+              </span>
+              {entry.detail && (
+                <span className="shrink-0 text-xs font-medium text-gray-500 tabular-nums">
+                  {entry.detail}
+                </span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 // Wrap a legend label: replace underscores with spaces and break at ~25 chars
 function wrapLegendLabel(label: string | undefined, width = 25): string {
@@ -103,6 +187,18 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedSeries, setExpandedSeries] = useState<Set<number>>(new Set());
+
+  const isMobile = useIsMobile();
+
+  // Explicit show/hide overrides driven by the mobile legend, keyed by
+  // `${series_id}|${traceKey}`. An absent key means "use the default", so on
+  // desktop — where the mobile legend never renders and nothing writes here —
+  // this map stays empty and trace visibility is exactly what it always was.
+  const [traceVisibility, setTraceVisibility] = useState<Record<string, boolean>>({});
+
+  const setTraceVisible = useCallback((key: string, visible: boolean) => {
+    setTraceVisibility(prev => ({ ...prev, [key]: visible }));
+  }, []);
 
   // Forecast filter state
   const [maxSizeFilter, setMaxSizeFilter] = useState<string>('');
@@ -484,7 +580,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   placeholder="Search by name or ID..."
                   value={modelSearchFilter}
                   onChange={(e) => setModelSearchFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-base sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               
@@ -499,7 +595,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   placeholder="Max parameters..."
                   value={maxSizeFilter}
                   onChange={(e) => setMaxSizeFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-base sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {filterOptions.maxSizes.length > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
@@ -517,7 +613,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   id="architecture"
                   value={architectureFilter}
                   onChange={(e) => setArchitectureFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  className="w-full px-3 py-2 text-base sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 >
                   <option value="">All architectures</option>
                   {filterOptions.architectures.map((arch) => (
@@ -549,24 +645,42 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
       <div className="space-y-6">{seriesData.map((series: any) => {
           // Prepare traces for context and test data
           const traces: any[] = [];
-          
+
+          // Rows for the mobile HTML legend, collected alongside the traces so the
+          // two can never drift apart.
+          const legendEntries: LegendEntry[] = [];
+          const visibilityKey = (traceKey: string) => `${series.series_id}|${traceKey}`;
+          const resolveVisible = (traceKey: string, fallback: boolean) =>
+            traceVisibility[visibilityKey(traceKey)] ?? fallback;
+
           // Ground truth trace (solid black line) — pushed first so it renders behind all other traces
           if (series.testData && series.testData.length > 0) {
+            const plainName = `Live: ${series.series_name || series.series_id}`;
+            const visible = resolveVisible('observed-live', true);
             traces.push({
               x: series.testData.map((d: any) => d.ts),
               y: series.testData.map((d: any) => d.value),
               type: 'scatter',
               mode: 'lines',
-              name: wrapLegendLabel(`Live: ${series.series_name || series.series_id}`),
+              name: isMobile ? plainName : wrapLegendLabel(plainName),
               line: { width: 2, color: '#000000', dash: 'solid' },
               legendgroup: 'actual',
               legendgrouptitle: { text: 'Observations' },
+              visible: visible ? true : 'legendonly',
               hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
+            });
+            legendEntries.push({
+              key: visibilityKey('observed-live'),
+              label: plainName,
+              color: '#000000',
+              dashed: false,
+              visible,
             });
           }
 
           // Context data trace (solid blue line)
           if (series.contextData && series.contextData.length > 0) {
+            const visible = resolveVisible('observed-context', true);
             traces.push({
               x: series.contextData.map((d: any) => d.ts),
               y: series.contextData.map((d: any) => d.value),
@@ -576,7 +690,15 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
               line: { width: 2, color: '#2563eb' },
               marker: { size: 4 },
               legendgroup: 'actual',
+              visible: visible ? true : 'legendonly',
               hovertemplate: '%{x|%Y-%m-%d %H:%M} UTC<br>Value: %{y:.4g}<extra>%{fullData.name}</extra>',
+            });
+            legendEntries.push({
+              key: visibilityKey('observed-context'),
+              label: 'Historical Data',
+              color: '#2563eb',
+              dashed: false,
+              visible,
             });
           }
 
@@ -612,21 +734,34 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             modelEntries.forEach(({ modelName, forecastData, label, mase }, idx) => {
               const dataArray = forecastData?.data;
               if (Array.isArray(dataArray) && dataArray.length > 0 && lastActualPoint) {
-                const displayName = wrapLegendLabel(
+                const maseText =
                   mase !== undefined && mase !== null
-                    ? `${label} (MASE: ${typeof mase === 'number' ? mase.toFixed(3) : mase})`
-                    : label
-                );
+                    ? `MASE: ${typeof mase === 'number' ? mase.toFixed(3) : mase}`
+                    : null;
+                const fullLabel = maseText ? `${label} (${maseText})` : label;
+                // Desktop keeps the hard wrap; on mobile the label lives in HTML,
+                // so the 25-character `<br>` hack is neither needed nor wanted.
+                const displayName = isMobile ? String(fullLabel ?? '') : wrapLegendLabel(fullLabel);
 
                 // Prepend the last actual point to connect the forecast line
                 const connectedX = [lastActualPoint.ts, ...dataArray.map((d: any) => d.ts)];
                 const connectedY = [lastActualPoint.value, ...dataArray.map((d: any) => d.y)];
 
                 // Show only the best 2 forecasts by default
-                const isVisible = visibleForecastCount < 2;
+                const traceKey = `forecast-${idx}`;
+                const isVisible = resolveVisible(traceKey, visibleForecastCount < 2);
                 visibleForecastCount++;
 
                 const color = colors[idx % colors.length];
+
+                legendEntries.push({
+                  key: visibilityKey(traceKey),
+                  label: String(label ?? modelName),
+                  detail: maseText ?? undefined,
+                  color,
+                  dashed: true,
+                  visible: isVisible,
+                });
 
                 console.log(`CI bounds for model "${modelName}":`, dataArray[0]?.ci ?? 'none');
 
@@ -714,37 +849,74 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             return [rangeStart.toISOString(), rangeEnd.toISOString()];
           })();
 
-          const layout: PlotParams['layout'] = {
-            xaxis: {
-              title: { text: '' },
-              showgrid: true,
-              type: 'date',
-              domain: [0, 0.82],
-              range: defaultXRange,
-              rangeslider: { visible: true },
-            },
-            yaxis: {
-              title: { text: series.unit ?? '' },
-              autorange: true,
-              showgrid: true,
-            },
-            hovermode: 'closest',
-            showlegend: true,
-            legend: {
-              orientation: 'v',
-              yanchor: 'top',
-              y: 1,
-              xanchor: 'left',
-              x: 0.85,
-              font: { size: 10 },
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
-              bordercolor: '#E5E7EB',
-              borderwidth: 1,
-            },
-            autosize: true,
-            margin: { l: 60, r: 20, t: 60, b: 50 },
-            uirevision: "static"
-          };
+          // Plotly's `uirevision` deliberately lets user-made UI state win over
+          // incoming props. On mobile the show/hide state comes from React, not
+          // from Plotly's own legend, so the revision has to change whenever that
+          // state does — otherwise a tap would be silently discarded. There is no
+          // zoom/pan state to lose, because `dragmode` is off on mobile.
+          const visibilityRevision = legendEntries
+            .map(entry => `${entry.key}=${entry.visible ? 1 : 0}`)
+            .join(',');
+
+          const layout: PlotParams['layout'] = isMobile
+            ? {
+                xaxis: {
+                  title: { text: '' },
+                  showgrid: true,
+                  type: 'date',
+                  domain: [0, 1],
+                  range: defaultXRange,
+                  rangeslider: { visible: false },
+                  automargin: true,
+                  nticks: 4,
+                  tickangle: 0,
+                  tickfont: { size: 10 },
+                },
+                yaxis: {
+                  title: { text: series.unit ?? '' },
+                  autorange: true,
+                  showgrid: true,
+                  automargin: true,
+                  tickfont: { size: 10 },
+                },
+                hovermode: 'closest',
+                showlegend: false,
+                dragmode: false,
+                autosize: true,
+                margin: MOBILE_PLOT_MARGIN,
+                uirevision: `mobile:${visibilityRevision}`,
+              }
+            : {
+                xaxis: {
+                  title: { text: '' },
+                  showgrid: true,
+                  type: 'date',
+                  domain: [0, 0.82],
+                  range: defaultXRange,
+                  rangeslider: { visible: true },
+                },
+                yaxis: {
+                  title: { text: series.unit ?? '' },
+                  autorange: true,
+                  showgrid: true,
+                },
+                hovermode: 'closest',
+                showlegend: true,
+                legend: {
+                  orientation: 'v',
+                  yanchor: 'top',
+                  y: 1,
+                  xanchor: 'left',
+                  x: 0.85,
+                  font: { size: 10 },
+                  bgcolor: 'rgba(255, 255, 255, 0.95)',
+                  bordercolor: '#E5E7EB',
+                  borderwidth: 1,
+                },
+                autosize: true,
+                margin: { l: 60, r: 20, t: 60, b: 50 },
+                uirevision: "static"
+              };
 
           const isExpanded = expandedSeries.has(series.series_id);
 
@@ -752,11 +924,11 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             <div key={series.series_id} className="w-full border border-gray-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => toggleSeries(series.series_id)}
-                className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="w-full px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-3 gap-y-1 bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <svg
-                    className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`w-5 h-5 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -769,7 +941,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                     </h3>
                   </div>
                 </div>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 w-full sm:w-auto">
                   {isExpanded ? 'Click to collapse' : 'Click to expand'}
                 </span>
               </button>
@@ -794,12 +966,24 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                     </div>
                   )}
                   {series.contextData.length > 0 && (
-                    <Plot
-                      data={plotData}
-                      layout={layout}
-                      style={{ width: '100%', height: '400px' }}
-                      useResizeHandler
-                    />
+                    <>
+                      <Plot
+                        data={plotData}
+                        layout={layout}
+                        config={isMobile ? MOBILE_PLOT_CONFIG : undefined}
+                        style={{
+                          width: '100%',
+                          height: isMobile ? MOBILE_PLOT_HEIGHT : '400px',
+                        }}
+                        useResizeHandler
+                      />
+                      {isMobile && (
+                        <MobilePlotLegend
+                          entries={legendEntries}
+                          onToggle={setTraceVisible}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               )}
