@@ -922,11 +922,11 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
             <div key={series.series_id} className="w-full border border-gray-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => toggleSeries(series.series_id)}
-                className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="w-full px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-3 gap-y-1 bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <svg
-                    className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`w-5 h-5 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -939,7 +939,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                     </h3>
                   </div>
                 </div>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 w-full sm:w-auto">
                   {isExpanded ? 'Click to collapse' : 'Click to expand'}
                 </span>
               </button>
