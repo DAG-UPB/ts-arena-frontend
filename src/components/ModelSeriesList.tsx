@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 import type { PlotParams } from 'react-plotly.js';
 import { DefinitionWithSeries, getModelSeriesForecasts } from '@/src/services/modelService';
 import { ModelSeriesForecastsResponse } from '../types/challenge';
+import { useIsMobile } from '@/src/hooks/useIsMobile';
+import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // Dynamically import Plotly to avoid SSR issues
@@ -34,6 +36,8 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
   const [seriesData, setSeriesData] = useState<Map<string, ExpandedSeriesData>>(new Map());
   const [dateFilters, setDateFilters] = useState<Map<string, { startDate?: string; endDate?: string }>>(new Map());
   const [pendingDateFilters, setPendingDateFilters] = useState<Map<string, { startDate?: string; endDate?: string }>>(new Map());
+
+  const isMobile = useIsMobile();
 
   const toggleDefinition = (definitionId: number) => {
     setExpandedDefinitions(prev => {
@@ -233,42 +237,73 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
       range: xAxisRange
     });
 
-    const layout: Partial<PlotParams['layout']> = {
-      xaxis: {
-        title: { text: '' },
-        type: 'date',
-        range: xAxisRange,
-        rangeslider: { visible: true },
-      },
-      yaxis: {
-        title: { text: data.data.series_unit ?? '' },
-      },
-      hovermode: 'closest',
-      showlegend: true,
-      legend: {
-        x: 1.02,
-        y: 1,
-        xanchor: 'left',
-        yanchor: 'top',
-      },
-      margin: { l: 60, r: 200, t: 60, b: 60 },
-      autosize: true,
-    };
+    const layout: Partial<PlotParams['layout']> = isMobile
+      ? {
+          xaxis: {
+            title: { text: '' },
+            type: 'date',
+            range: xAxisRange,
+            rangeslider: { visible: false },
+            automargin: true,
+            nticks: 4,
+            tickangle: 0,
+            tickfont: { size: 10 },
+          },
+          yaxis: {
+            title: { text: data.data.series_unit ?? '' },
+            automargin: true,
+            tickfont: { size: 10 },
+          },
+          hovermode: 'closest',
+          // One legend entry per round, and the window defaults to 30 days, so
+          // the list is unbounded — an HTML legend below the plot would out-
+          // scroll the chart it explains. Nothing is lost: every trace is
+          // visible by default (unlike TimeSeriesChart, there is no hidden data
+          // to reveal), so the legend is a colour key only, and the round name
+          // is already in the hover tooltip via `%{fullData.name}`.
+          showlegend: false,
+          dragmode: false,
+          margin: MOBILE_PLOT_MARGIN,
+          autosize: true,
+        }
+      : {
+          xaxis: {
+            title: { text: '' },
+            type: 'date',
+            range: xAxisRange,
+            rangeslider: { visible: true },
+          },
+          yaxis: {
+            title: { text: data.data.series_unit ?? '' },
+          },
+          hovermode: 'closest',
+          showlegend: true,
+          legend: {
+            x: 1.02,
+            y: 1,
+            xanchor: 'left',
+            yanchor: 'top',
+          },
+          margin: { l: 60, r: 200, t: 60, b: 60 },
+          autosize: true,
+        };
 
-    const config: PlotParams['config'] = {
-      responsive: true,
-      displayModeBar: true,
-      displaylogo: false,
-      modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-    };
+    const config: PlotParams['config'] = isMobile
+      ? MOBILE_PLOT_CONFIG
+      : {
+          responsive: true,
+          displayModeBar: true,
+          displaylogo: false,
+          modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+        };
 
     return (
-      <div className="w-full" style={{ minHeight: '400px' }}>
+      <div className="w-full" style={{ minHeight: isMobile ? MOBILE_PLOT_HEIGHT : '400px' }}>
         <Plot
           data={traces}
           layout={layout}
           config={config}
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: '100%', height: isMobile ? MOBILE_PLOT_HEIGHT : '100%' }}
           useResizeHandler={true}
         />
       </div>
@@ -393,23 +428,26 @@ export default function ModelSeriesList({ definitions, modelId }: ModelSeriesLis
                           <tr className="bg-white">
                             <td colSpan={5} className="px-6 py-6">
                               <div className="flex flex-col w-full">
-                                <div className="flex justify-end mb-3 gap-3">
+                                <div className="flex flex-wrap justify-end mb-3 gap-3">
                                   <label className="flex items-center text-xs text-gray-500 gap-1.5">
                                     <span className="font-medium">From:</span>
-                                    <input 
-                                      type="date" 
+                                    {/* text-base below `sm`: iOS Safari zooms into any focused
+                                        input under 16px and never zooms back out. */}
+                                    <input
+                                      type="date"
                                       value={(pendingDateFilters.get(cacheKey) || dateFilters.get(cacheKey))?.startDate || ''}
                                       onChange={(e) => handleDateChange(series.series_id, definition.definition_id, 'start', e.target.value)}
-                                      className="px-2 py-1 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400" 
+                                      className="px-2 py-1 text-base sm:text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                                     />
                                   </label>
                                   <label className="flex items-center text-xs text-gray-500 gap-1.5">
                                     <span className="font-medium">To:</span>
-                                    <input 
-                                      type="date" 
+                                    {/* text-base below `sm`: see the "From" input above. */}
+                                    <input
+                                      type="date"
                                       value={(pendingDateFilters.get(cacheKey) || dateFilters.get(cacheKey))?.endDate || ''}
                                       onChange={(e) => handleDateChange(series.series_id, definition.definition_id, 'end', e.target.value)}
-                                      className="px-2 py-1 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400" 
+                                      className="px-2 py-1 text-base sm:text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                                     />
                                   </label>
                                   <button

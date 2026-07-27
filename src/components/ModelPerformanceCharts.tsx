@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { DefinitionRankingWithHistory } from '@/src/services/modelService';
+import { useIsMobile } from '@/src/hooks/useIsMobile';
+import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -14,6 +16,8 @@ interface ModelPerformanceChartsProps {
 
 export default function ModelPerformanceCharts({ definitionRankings }: ModelPerformanceChartsProps) {
   const [expandedDefinitions, setExpandedDefinitions] = useState<Record<string, boolean>>({});
+
+  const isMobile = useIsMobile();
 
   const toggleDefinition = (uniqueKey: string) => {
     setExpandedDefinitions(prev => ({
@@ -150,6 +154,68 @@ export default function ModelPerformanceCharts({ definitionRankings }: ModelPerf
         const eloLower = sortedRankings.map(r => r.elo_ci_lower);
         const ranks = sortedRankings.map(r => r.rank_position);
 
+        // Headroom above the widest CI bound, shared by both layout branches.
+        const eloAxisMax = Math.max(...eloUpper, ...eloScores, ...eloLower) * 1.05;
+
+        // Plotly's typings reject the string shorthand used for the titles
+        // below, so the cast is kept from the original inline layout.
+        // The desktop branch is the previous layout verbatim.
+        const layout = (isMobile
+          ? {
+              // No plot title on a phone: the accordion header above already
+              // names the scope, and the y-axis title names the metric, so the
+              // title would only cost 50px of a 360px-tall chart.
+              xaxis: {
+                gridcolor: '#e5e7eb',
+                showgrid: true,
+                automargin: true,
+                nticks: 4,
+                tickangle: 0,
+                tickfont: { size: 10 },
+              },
+              yaxis: {
+                title: 'ELO Score',
+                gridcolor: '#e5e7eb',
+                showgrid: true,
+                range: [0, eloAxisMax],
+                automargin: true,
+                tickfont: { size: 10 },
+              },
+              hovermode: 'closest',
+              // The only legend entry duplicates the y-axis title, and it sits
+              // on top of the plot at (0, 1) — drop it rather than replace it.
+              showlegend: false,
+              dragmode: false,
+              autosize: true,
+              margin: MOBILE_PLOT_MARGIN,
+              paper_bgcolor: 'white',
+              plot_bgcolor: 'white',
+            }
+          : {
+              title: 'ELO Score Over Time',
+              xaxis: {
+                title: 'Date',
+                gridcolor: '#e5e7eb',
+                showgrid: true,
+              },
+              yaxis: {
+                title: 'ELO Score',
+                gridcolor: '#e5e7eb',
+                showgrid: true,
+                range: [0, eloAxisMax],
+              },
+              hovermode: 'closest',
+              showlegend: true,
+              legend: {
+                x: 0,
+                y: 1,
+                bgcolor: 'rgba(255, 255, 255, 0.8)',
+              },
+              margin: { l: 60, r: 40, t: 50, b: 60 },
+              paper_bgcolor: 'white',
+              plot_bgcolor: 'white',
+            }) as any;
+
         return (
           <div key={uniqueKey} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
             <button
@@ -231,37 +297,14 @@ export default function ModelPerformanceCharts({ definitionRankings }: ModelPerf
                         '<extra></extra>',
                     },
                   ] as any}
-                  layout={{
-                    title: 'ELO Score Over Time',
-                    xaxis: {
-                      title: 'Date',
-                      gridcolor: '#e5e7eb',
-                      showgrid: true,
-                    },
-                    yaxis: {
-                      title: 'ELO Score',
-                      gridcolor: '#e5e7eb',
-                      showgrid: true,
-                      range: [0, Math.max(...eloUpper, ...eloScores, ...eloLower) * 1.05],
-                    },
-                    hovermode: 'closest',
-                    showlegend: true,
-                    legend: {
-                      x: 0,
-                      y: 1,
-                      bgcolor: 'rgba(255, 255, 255, 0.8)',
-                    },
-                    margin: { l: 60, r: 40, t: 50, b: 60 },
-                    paper_bgcolor: 'white',
-                    plot_bgcolor: 'white',
-                  } as any}
-                  config={{
+                  layout={layout}
+                  config={isMobile ? MOBILE_PLOT_CONFIG : {
                     responsive: true,
                     displayModeBar: true,
                     displaylogo: false,
                     modeBarButtonsToRemove: ['lasso2d', 'select2d'],
                   }}
-                  style={{ width: '100%', height: '400px' }}
+                  style={{ width: '100%', height: isMobile ? MOBILE_PLOT_HEIGHT : '400px' }}
                 />
 
                 {/* Current stats */}

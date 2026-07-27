@@ -7,6 +7,7 @@ import type { PlotParams } from 'react-plotly.js';
 import type { ForecastsResponse, ForecastData, Model } from '@/src/types/challenge';
 import { getChallengeSeries, getSeriesData, getSeriesForecasts, getRoundModels } from '@/src/services/roundService';
 import { useIsMobile } from '@/src/hooks/useIsMobile';
+import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
 import humanizeDuration from 'humanize-duration';
 import { parse, toSeconds } from 'iso8601-duration';
 import wrap from 'word-wrap';
@@ -14,16 +15,6 @@ import wrap from 'word-wrap';
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
-
-// On phones the plot is only ~200px wide, so Plotly's own chrome has to go:
-// the modebar does not fit, and `dragmode: false` (set in the layout) makes
-// Plotly skip its non-passive touchmove handler so a swipe scrolls the page
-// instead of drawing a zoom box.
-const MOBILE_PLOT_CONFIG: PlotParams['config'] = {
-  responsive: true,
-  displayModeBar: false,
-  doubleClick: 'reset',
-};
 
 // One row of the mobile legend. `key` is already namespaced per series.
 interface LegendEntry {
@@ -587,7 +578,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   placeholder="Search by name or ID..."
                   value={modelSearchFilter}
                   onChange={(e) => setModelSearchFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-base sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               
@@ -602,7 +593,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   placeholder="Max parameters..."
                   value={maxSizeFilter}
                   onChange={(e) => setMaxSizeFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-base sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {filterOptions.maxSizes.length > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
@@ -620,7 +611,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   id="architecture"
                   value={architectureFilter}
                   onChange={(e) => setArchitectureFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  className="w-full px-3 py-2 text-base sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 >
                   <option value="">All architectures</option>
                   {filterOptions.architectures.map((arch) => (
@@ -890,7 +881,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                 showlegend: false,
                 dragmode: false,
                 autosize: true,
-                margin: { l: 44, r: 8, t: 8, b: 36 },
+                margin: MOBILE_PLOT_MARGIN,
                 uirevision: `mobile:${visibilityRevision}`,
               }
             : {
@@ -980,7 +971,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                         config={isMobile ? MOBILE_PLOT_CONFIG : undefined}
                         style={{
                           width: '100%',
-                          height: isMobile ? 'min(60vh, 360px)' : '400px',
+                          height: isMobile ? MOBILE_PLOT_HEIGHT : '400px',
                         }}
                         useResizeHandler
                       />
