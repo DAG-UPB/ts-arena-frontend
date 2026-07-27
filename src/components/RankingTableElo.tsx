@@ -286,7 +286,61 @@ export default function RankingTableElo({
           )}
         </div>
       )}
-      <div className="overflow-x-auto">
+      {/* Card list: small screens only. The full table needs ~1200-1900px of
+          horizontal room, which pushes the ELO score (the point of the page)
+          off-screen on a phone. */}
+      <div className="md:hidden p-3 space-y-2">
+        {table.getRowModel().rows.map((row) => {
+          const model = row.original;
+          const eloUpperDiff = model.elo_ci_upper - model.elo_rating_median;
+          const eloLowerDiff = model.elo_rating_median - model.elo_ci_lower;
+
+          return (
+            <button
+              key={row.id}
+              type="button"
+              onClick={() => handleRowClick(String(model.model_id), model.model_name)}
+              className="w-full text-left bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-3"
+            >
+              <div className="flex items-start gap-3">
+                <span className="inline-flex items-center justify-center shrink-0 w-7 h-7 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">
+                  {model.rank_position}
+                </span>
+                <span className="text-sm font-medium text-gray-900 break-words">
+                  {model.model_name}
+                </span>
+              </div>
+
+              <div className="mt-3 space-y-1 text-sm">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-gray-500">ELO Score</span>
+                  <span className="text-gray-900 font-semibold">
+                    {model.elo_rating_median.toFixed(1)}
+                    <span className="ml-1.5 text-xs font-normal text-gray-500">
+                      +{eloUpperDiff.toFixed(1)}/-{eloLowerDiff.toFixed(1)}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-gray-500">Avg MASE</span>
+                  {model.avg_mase === null || model.mase_std === null ? (
+                    <span className="text-gray-400">N/A</span>
+                  ) : (
+                    <span className="text-gray-900">
+                      {model.avg_mase.toFixed(3)}
+                      <span className="ml-1.5 text-xs text-gray-500">
+                        ±{model.mase_std.toFixed(3)}
+                      </span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (
