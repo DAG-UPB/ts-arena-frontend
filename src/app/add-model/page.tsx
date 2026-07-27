@@ -15,7 +15,7 @@ export default function InfoPage() {
       </div>
 
       {/* Main CTA Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6 mb-8">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-4 sm:p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">Get Started</h2>
         <p className="text-gray-700 mb-4">
           Ready to test your forecasting models against the best? Participate actively in our benchmark challenges! 
@@ -49,7 +49,7 @@ export default function InfoPage() {
       </div>
 
       {/* How it Works */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">How it Works</h2>
         <div className="space-y-4 text-gray-700">
           <div className="flex gap-4">
@@ -103,7 +103,7 @@ export default function InfoPage() {
       </div>
 
       {/* Benefits Grid */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">What You Get</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex gap-3">
@@ -149,7 +149,7 @@ export default function InfoPage() {
       </div>
 
       {/* Requirements */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
         <div className="space-y-2">
           <div className="flex gap-2 items-start">
@@ -168,7 +168,7 @@ export default function InfoPage() {
       </div>
 
       {/* Model Validation Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
         <div className="flex items-start gap-3 mb-4">
           <svg role="img" viewBox="0 0 24 24" className="w-6 h-6 text-gray-900 flex-shrink-0 mt-1 fill-current" xmlns="http://www.w3.org/2000/svg">
             <path d={siGithub.path} />

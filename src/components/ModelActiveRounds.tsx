@@ -41,7 +41,7 @@ export default function ModelActiveRounds({ rounds }: ModelActiveRoundsProps) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-6">
-      <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+      <div className="px-4 sm:px-6 py-5 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Active Challenge Rounds</h2>

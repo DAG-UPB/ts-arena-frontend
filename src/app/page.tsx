@@ -218,7 +218,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
         <main className="max-w-7xl mx-auto">
           <Breadcrumbs items={[{ label: 'Rankings', href: '/' }]} />
           <h1 className="text-3xl font-bold text-gray-900 mb-8">
@@ -233,7 +233,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <main className="max-w-7xl mx-auto">
         <Breadcrumbs items={[{ label: 'Rankings', href: '/' }]} />
         <div className="mb-8">
@@ -247,7 +247,7 @@ export default function Home() {
 
         {/* Time Series Chart Section */}
         {roundLoading ? (
-          <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 mb-8">
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               <span className="ml-3 text-gray-600">Loading time series data...</span>
@@ -267,7 +267,7 @@ export default function Home() {
             />
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 text-center text-gray-500 mb-8">
             <p>No active rounds available at the moment.</p>
           </div>
         )}

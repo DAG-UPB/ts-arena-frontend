@@ -238,7 +238,7 @@ export default function ChallengeDefinitionDetail() {
         ) : series.length > 0 ? (
           <div className="bg-white rounded-lg shadow-md overflow-hidden divide-y divide-gray-200">
             {series.map((s) => (
-              <div key={s.series_id} className="px-6 py-4">
+              <div key={s.series_id} className="px-4 sm:px-6 py-4">
                 <div className="font-medium text-gray-900">{s.name}</div>
                 {s.display_text && (
                   <div className="text-sm text-gray-600 mt-1">{s.display_text}</div>

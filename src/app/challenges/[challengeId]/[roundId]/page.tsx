@@ -112,7 +112,7 @@ export default function RoundDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -124,7 +124,7 @@ export default function RoundDetail() {
 
   if (error || !round) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
             <p className="font-semibold">Error</p>
@@ -142,7 +142,7 @@ export default function RoundDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <Breadcrumbs 
           items={[
@@ -182,7 +182,7 @@ export default function RoundDetail() {
         {round.status === 'registration' && (
           <Link 
             href="/add-model"
-            className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg px-6 py-4 block hover:bg-yellow-100 hover:border-yellow-300 transition-colors cursor-pointer"
+            className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg px-4 sm:px-6 py-4 block hover:bg-yellow-100 hover:border-yellow-300 transition-colors cursor-pointer"
           >
             <div className="flex items-center">
               <Clock className="h-6 w-6 text-yellow-600 mr-3 flex-shrink-0" />
@@ -212,10 +212,10 @@ export default function RoundDetail() {
         {/* Time Series Chart Section */}
         {round.status === 'registration' ? (
           <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div className="px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Time Series Data</h2>
             </div>
-            <div className="px-6 py-12 text-center text-gray-500">
+            <div className="px-4 sm:px-6 py-12 text-center text-gray-500">
               <Info className="mx-auto h-12 w-12 text-gray-400 mb-4" strokeWidth={1.5} />
               <p className="text-lg font-medium text-gray-600">Series data not yet available</p>
               <p className="text-sm text-gray-400 mt-1">The time series will be revealed once the round starts.</p>

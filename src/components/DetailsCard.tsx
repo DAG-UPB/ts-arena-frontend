@@ -29,27 +29,27 @@ export default function DetailsCard({
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+      <div className="px-4 sm:px-6 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
         <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
         <p className="mt-2 text-sm font-medium text-gray-500">{id}</p>
       </div>
 
       {/* Description */}
       {description && (
-        <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+        <div className="px-4 sm:px-6 py-5 border-b border-gray-200 bg-gray-50">
           <p className="text-gray-700 leading-relaxed">{description}</p>
         </div>
       )}
 
       {/* Long-form description (display_text) */}
       {displayText && (
-        <div className="px-6 py-5 border-b border-gray-200">
+        <div className="px-4 sm:px-6 py-5 border-b border-gray-200">
           <p className="text-gray-700 leading-relaxed whitespace-pre-line">{displayText}</p>
         </div>
       )}
 
       {/* Main Content */}
-      <div className="px-6 py-6">
+      <div className="px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {fields.map((field, index) => (
             <div key={index} className="space-y-1">
