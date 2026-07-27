@@ -13,8 +13,10 @@ import { parse, toSeconds } from 'iso8601-duration';
 import wrap from 'word-wrap';
 
 
-// Dynamically import Plotly to avoid SSR issues
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+// Dynamically import Plotly to avoid SSR issues. `PlotlyPlot` is the app's
+// single Plotly entry point — see the note there on why it is not
+// `react-plotly.js` directly.
+const Plot = dynamic(() => import('@/src/components/PlotlyPlot'), { ssr: false });
 
 // One row of the mobile legend. `key` is already namespaced per series.
 interface LegendEntry {

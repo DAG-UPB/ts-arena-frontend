@@ -8,7 +8,10 @@ import { useIsMobile } from '@/src/hooks/useIsMobile';
 import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+// Dynamically import Plotly to avoid SSR issues. `PlotlyPlot` is the app's
+// single Plotly entry point — see the note there on why it is not
+// `react-plotly.js` directly.
+const Plot = dynamic(() => import('@/src/components/PlotlyPlot'), { ssr: false });
 
 interface ModelPerformanceChartsProps {
   definitionRankings: DefinitionRankingWithHistory[];
