@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
 import RankingTableElo from '@/src/components/RankingTableElo';
@@ -238,7 +239,7 @@ export default function ChallengeDefinitionDetail() {
         ) : series.length > 0 ? (
           <div className="bg-white rounded-lg shadow-md overflow-hidden divide-y divide-gray-200">
             {series.map((s) => (
-              <div key={s.series_id} className="px-6 py-4">
+              <div key={s.series_id} className="px-4 sm:px-6 py-4">
                 <div className="font-medium text-gray-900">{s.name}</div>
                 {s.display_text && (
                   <div className="text-sm text-gray-600 mt-1">{s.display_text}</div>
@@ -262,19 +263,33 @@ export default function ChallengeDefinitionDetail() {
             {/* Calculation Month Filter */}
             <div className="flex items-center gap-2">
               <label className="text-xs text-gray-500">Period</label>
-              <div className="relative group">
-                <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                <div className="absolute right-0 top-6 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                  <div className="font-medium mb-1">Calculation Period</div>
-                  <div className="text-gray-200">
-                    Select a month to view rankings calculated at the end of that period. "Recent" shows the most current rankings.
-                  </div>
-                </div>
-              </div>
+              <Popover className="relative group">
+                {({ open }) => (
+                  <>
+                    <PopoverButton
+                      className="flex items-center justify-center w-11 h-11 -m-[14px] rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                      aria-label="About the calculation period"
+                    >
+                      <Info className="w-4 h-4" aria-hidden="true" />
+                    </PopoverButton>
+                    <PopoverPanel
+                      static
+                      className={`absolute right-0 top-6 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg transition-all duration-200 z-10 ${
+                        open ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                      }`}
+                    >
+                      <div className="font-medium mb-1">Calculation Period</div>
+                      <div className="text-gray-200">
+                        Select a month to view rankings calculated at the end of that period. &quot;Recent&quot; shows the most current rankings.
+                      </div>
+                    </PopoverPanel>
+                  </>
+                )}
+              </Popover>
               <select
                 value={selectedCalculationDate}
                 onChange={(e) => setSelectedCalculationDate(e.target.value)}
-                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer"
+                className="px-3 py-1 text-base sm:text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer"
               >
                 {monthOptions.map((option) => (
                   <option key={option.value} value={option.value}>

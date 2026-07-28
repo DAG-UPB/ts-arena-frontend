@@ -23,7 +23,7 @@ export default function Pagination({
   }
 
   return (
-    <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+    <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
       <div className="text-sm text-gray-700">
         Showing {startIndex + 1} to {endIndex} of {totalItems} {itemLabel}
       </div>

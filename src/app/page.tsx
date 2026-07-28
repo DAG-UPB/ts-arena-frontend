@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
 import RankingTableElo from '@/src/components/RankingTableElo';
@@ -166,41 +167,36 @@ export default function Home() {
           }
         }
         
-        // Fetch overall rankings (no definition/frequency filters)
-        const overallResponse = await getFilteredRankings(baseFilters);
-        
-        // Fetch rankings for each definition (limit concurrency)
-        const byDefinitionPromises = options.definitions.map(async (def: ChallengeDefinition) => {
-          const response = await getFilteredRankings({ 
-            ...baseFilters,
-            definition_id: def.id,
-          });
-          return { id: def.id, rankings: response.rankings };
-        });
-        
-        // Fetch rankings for each frequency/horizon (limit concurrency)
-        const byFrequencyHorizonPromises = options.frequency_horizons.map(async (fh: string) => {
-          const response = await getFilteredRankings({ 
-            ...baseFilters,
-            frequency_horizon: fh,
-          });
-          return { fh, rankings: response.rankings };
-        });
-        
-        // Process in batches to avoid overwhelming the browser
-        const definitionResults = await Promise.all(byDefinitionPromises);
-        const frequencyHorizonResults = await Promise.all(byFrequencyHorizonPromises);
-        
+        // Three requests total: overall, all definitions, all frequency/horizons.
+        // This page used to issue one request per definition and per
+        // frequency/horizon — with 16 definitions that was ~20 parallel calls,
+        // each of which costs the API a full scan of the rankings view.
+        const [overallResponse, definitionResponse, frequencyHorizonResponse] = await Promise.all([
+          getFilteredRankings(baseFilters),
+          getFilteredRankings({ ...baseFilters, scope_type: 'definition' }),
+          getFilteredRankings({ ...baseFilters, scope_type: 'frequency_horizon' }),
+        ]);
+
+        // Bulk responses arrive as one flat list; group them by scope.
         const byDefinition: Record<number, ModelRanking[]> = {};
-        definitionResults.forEach(({ id, rankings }) => {
-          byDefinition[id] = rankings;
+        options.definitions.forEach((def: ChallengeDefinition) => {
+          byDefinition[def.id] = [];
         });
-        
+        definitionResponse.rankings.forEach((r) => {
+          const id = r.definition_id ?? (r.scope_id != null ? Number(r.scope_id) : undefined);
+          if (id === undefined || Number.isNaN(id)) return;
+          (byDefinition[id] ??= []).push(r);
+        });
+
         const byFrequencyHorizon: Record<string, ModelRanking[]> = {};
-        frequencyHorizonResults.forEach(({ fh, rankings }) => {
-          byFrequencyHorizon[fh] = rankings;
+        options.frequency_horizons.forEach((fh: string) => {
+          byFrequencyHorizon[fh] = [];
         });
-        
+        frequencyHorizonResponse.rankings.forEach((r) => {
+          if (r.scope_id == null) return;
+          (byFrequencyHorizon[r.scope_id] ??= []).push(r);
+        });
+
         setRankingsData({
           overall: overallResponse.rankings,
           byDefinition,
@@ -218,7 +214,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
         <main className="max-w-7xl mx-auto">
           <Breadcrumbs items={[{ label: 'Rankings', href: '/' }]} />
           <h1 className="text-3xl font-bold text-gray-900 mb-8">
@@ -233,7 +229,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <main className="max-w-7xl mx-auto">
         <Breadcrumbs items={[{ label: 'Rankings', href: '/' }]} />
         <div className="mb-8">
@@ -247,7 +243,7 @@ export default function Home() {
 
         {/* Time Series Chart Section */}
         {roundLoading ? (
-          <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 mb-8">
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               <span className="ml-3 text-gray-600">Loading time series data...</span>
@@ -267,7 +263,7 @@ export default function Home() {
             />
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 text-center text-gray-500 mb-8">
             <p>No active rounds available at the moment.</p>
           </div>
         )}
@@ -278,23 +274,42 @@ export default function Home() {
             <h2 className="text-2xl font-semibold text-gray-900">Overall Ranking</h2>
             
             {/* Calculation Month Filter */}
-            <div className="flex items-center gap-2">
+            {/* `relative` sits here, not on the Popover: the Popover box is only as
+                wide as its 16px icon, so a `right-0` panel anchored to it starts
+                off the left edge of a phone screen. Anchoring to this row instead
+                gives the panel the full card width to grow into. `group` stays on
+                the Popover so hover still only triggers from the icon. */}
+            <div className="relative flex items-center gap-2">
               <label className="text-xs text-gray-500">Period</label>
-              <div className="relative group">
-                <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                <div className="absolute right-0 top-6 w-72 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                  <div className="font-medium mb-1">Calculation Period</div>
-                  <div className="text-gray-200 space-y-1">
-                    <p>Rankings are recalculated multiple times a day as new ground truth data arrives.</p>
-                    <p>Historical standings are snapshotted once per month. Select a month to view that period&apos;s snapshot.</p>
-                    <p>&ldquo;Recent&rdquo; shows today&apos;s current ranking.</p>
-                  </div>
-                </div>
-              </div>
+              <Popover className="group">
+                {({ open }) => (
+                  <>
+                    <PopoverButton
+                      className="flex items-center justify-center w-11 h-11 -m-[14px] rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                      aria-label="About the calculation period"
+                    >
+                      <Info className="w-4 h-4" aria-hidden="true" />
+                    </PopoverButton>
+                    <PopoverPanel
+                      static
+                      className={`absolute right-0 top-6 w-72 max-w-[calc(100vw-2rem)] p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg transition-all duration-200 z-10 ${
+                        open ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                      }`}
+                    >
+                      <div className="font-medium mb-1">Calculation Period</div>
+                      <div className="text-gray-200 space-y-1">
+                        <p>Rankings are recalculated multiple times a day as new ground truth data arrives.</p>
+                        <p>Historical standings are snapshotted once per month. Select a month to view that period&apos;s snapshot.</p>
+                        <p>&ldquo;Recent&rdquo; shows today&apos;s current ranking.</p>
+                      </div>
+                    </PopoverPanel>
+                  </>
+                )}
+              </Popover>
               <select
                 value={selectedCalculationDate}
                 onChange={(e) => setSelectedCalculationDate(e.target.value)}
-                className="px-3 py-1 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer"
+                className="px-3 py-1 text-base sm:text-xs bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer"
               >
                 {monthOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -318,7 +333,7 @@ export default function Home() {
               value={effectiveDefinitionId ?? ''}
               onChange={(e) => setSelectedDefinitionId(Number(e.target.value))}
               disabled={filterOptions.definitions.length === 0}
-              className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer max-w-full sm:max-w-sm disabled:opacity-50"
+              className="px-3 py-2 text-base sm:text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer max-w-full sm:max-w-sm disabled:opacity-50"
             >
               {filterOptions.definitions.map((def) => (
                 <option key={def.id} value={def.id}>
@@ -354,7 +369,7 @@ export default function Home() {
                   value={effectiveFrequency ?? ''}
                   onChange={(e) => setSelectedFrequency(e.target.value)}
                   disabled={frequencyOptions.length === 0}
-                  className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
+                  className="px-3 py-2 text-base sm:text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
                 >
                   {frequencyOptions.map((f) => (
                     <option key={f} value={f}>
@@ -369,7 +384,7 @@ export default function Home() {
                   value={effectiveHorizon ?? ''}
                   onChange={(e) => setSelectedHorizon(e.target.value)}
                   disabled={horizonOptions.length === 0}
-                  className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
+                  className="px-3 py-2 text-base sm:text-sm bg-white border border-gray-200 rounded-md text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 cursor-pointer disabled:opacity-50"
                 >
                   {horizonOptions.map((h) => (
                     <option key={h} value={h}>

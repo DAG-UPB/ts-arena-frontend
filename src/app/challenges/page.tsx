@@ -127,7 +127,7 @@ export default function ChallengeDefinitions() {
           id="groupBy"
           value={groupBy}
           onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
-          className="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+          className="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base sm:text-sm"
         >
           <option value="none">None</option>
           <option value="frequency">Frequency</option>
@@ -156,7 +156,7 @@ export default function ChallengeDefinitions() {
                   href={`/challenges/${definition.id}`}
                   className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col cursor-pointer"
                 >
-                  <div className="p-6 flex-1">
+                  <div className="p-4 sm:p-6 flex-1">
                     <div className="flex items-start justify-between mb-3">
                       <h2 className="text-xl font-semibold text-gray-900">
                         {definition.name}
@@ -242,7 +242,7 @@ export default function ChallengeDefinitions() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
+                  <div className="bg-gray-50 px-4 sm:px-6 py-3 border-t border-gray-200">
                     <span className="text-xs text-gray-500">ID: {definition.id}</span>
                   </div>
                 </Link>

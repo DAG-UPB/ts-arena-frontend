@@ -28,7 +28,7 @@ export default function BacktestingArchivePage() {
         </div>
 
         {/* CTA */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6 mb-6">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-4 sm:p-6 mb-6">
           <p className="text-gray-700 mb-4">
             The archive provides quarterly snapshots of past challenges, including input context,
             ground truth, and the pre-registered forecasts from all participating models. This lets
