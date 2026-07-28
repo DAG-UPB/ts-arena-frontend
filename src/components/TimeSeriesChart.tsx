@@ -926,7 +926,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                 onClick={() => toggleSeries(series.series_id)}
                 className="w-full px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-3 gap-y-1 bg-gray-50 hover:bg-gray-100 transition-colors"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <svg
                     className={`w-5 h-5 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
                     fill="none"
@@ -935,8 +935,11 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-gray-900">
+                  <div className="text-left min-w-0">
+                    {/* Series names are long unbroken tokens (…power_plant_generation);
+                        without min-w-0 the flex item refuses to shrink and the name is
+                        clipped off-screen on a phone. */}
+                    <h3 className="font-semibold text-gray-900 break-words">
                       {series.series_name || `Series ${series.series_id}`}
                     </h3>
                   </div>

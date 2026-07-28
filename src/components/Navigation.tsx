@@ -39,7 +39,7 @@ export default function Navigation({ showNews = false }: NavigationProps) {
                     TS-Arena
                   </Link>
                 </div>
-                <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <div className="hidden lg:ml-6 lg:flex lg:space-x-8">
                   {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -71,7 +71,7 @@ export default function Navigation({ showNews = false }: NavigationProps) {
                   </svg>
                   <span>GitHub</span>
                 </a>
-                <DisclosureButton className="sm:hidden inline-flex items-center justify-center h-11 w-11 -mr-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                <DisclosureButton className="lg:hidden inline-flex items-center justify-center h-11 w-11 -mr-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                   <span className="sr-only">{open ? 'Close main menu' : 'Open main menu'}</span>
                   {open ? (
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="w-6 h-6" aria-hidden="true">
@@ -87,7 +87,7 @@ export default function Navigation({ showNews = false }: NavigationProps) {
             </div>
           </div>
 
-          <DisclosurePanel className="sm:hidden border-t border-gray-200">
+          <DisclosurePanel className="lg:hidden border-t border-gray-200">
             {({ close }) => (
               <div className="py-2">
                 {navItems.map((item) => {

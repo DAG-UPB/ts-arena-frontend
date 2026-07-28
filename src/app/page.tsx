@@ -279,9 +279,14 @@ export default function Home() {
             <h2 className="text-2xl font-semibold text-gray-900">Overall Ranking</h2>
             
             {/* Calculation Month Filter */}
-            <div className="flex items-center gap-2">
+            {/* `relative` sits here, not on the Popover: the Popover box is only as
+                wide as its 16px icon, so a `right-0` panel anchored to it starts
+                off the left edge of a phone screen. Anchoring to this row instead
+                gives the panel the full card width to grow into. `group` stays on
+                the Popover so hover still only triggers from the icon. */}
+            <div className="relative flex items-center gap-2">
               <label className="text-xs text-gray-500">Period</label>
-              <Popover className="relative group">
+              <Popover className="group">
                 {({ open }) => (
                   <>
                     <PopoverButton
@@ -292,7 +297,7 @@ export default function Home() {
                     </PopoverButton>
                     <PopoverPanel
                       static
-                      className={`absolute right-0 top-6 w-72 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg transition-all duration-200 z-10 ${
+                      className={`absolute right-0 top-6 w-72 max-w-[calc(100vw-2rem)] p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg transition-all duration-200 z-10 ${
                         open ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
                       }`}
                     >
