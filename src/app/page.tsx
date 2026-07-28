@@ -167,41 +167,36 @@ export default function Home() {
           }
         }
         
-        // Fetch overall rankings (no definition/frequency filters)
-        const overallResponse = await getFilteredRankings(baseFilters);
-        
-        // Fetch rankings for each definition (limit concurrency)
-        const byDefinitionPromises = options.definitions.map(async (def: ChallengeDefinition) => {
-          const response = await getFilteredRankings({ 
-            ...baseFilters,
-            definition_id: def.id,
-          });
-          return { id: def.id, rankings: response.rankings };
-        });
-        
-        // Fetch rankings for each frequency/horizon (limit concurrency)
-        const byFrequencyHorizonPromises = options.frequency_horizons.map(async (fh: string) => {
-          const response = await getFilteredRankings({ 
-            ...baseFilters,
-            frequency_horizon: fh,
-          });
-          return { fh, rankings: response.rankings };
-        });
-        
-        // Process in batches to avoid overwhelming the browser
-        const definitionResults = await Promise.all(byDefinitionPromises);
-        const frequencyHorizonResults = await Promise.all(byFrequencyHorizonPromises);
-        
+        // Three requests total: overall, all definitions, all frequency/horizons.
+        // This page used to issue one request per definition and per
+        // frequency/horizon — with 16 definitions that was ~20 parallel calls,
+        // each of which costs the API a full scan of the rankings view.
+        const [overallResponse, definitionResponse, frequencyHorizonResponse] = await Promise.all([
+          getFilteredRankings(baseFilters),
+          getFilteredRankings({ ...baseFilters, scope_type: 'definition' }),
+          getFilteredRankings({ ...baseFilters, scope_type: 'frequency_horizon' }),
+        ]);
+
+        // Bulk responses arrive as one flat list; group them by scope.
         const byDefinition: Record<number, ModelRanking[]> = {};
-        definitionResults.forEach(({ id, rankings }) => {
-          byDefinition[id] = rankings;
+        options.definitions.forEach((def: ChallengeDefinition) => {
+          byDefinition[def.id] = [];
         });
-        
+        definitionResponse.rankings.forEach((r) => {
+          const id = r.definition_id ?? (r.scope_id != null ? Number(r.scope_id) : undefined);
+          if (id === undefined || Number.isNaN(id)) return;
+          (byDefinition[id] ??= []).push(r);
+        });
+
         const byFrequencyHorizon: Record<string, ModelRanking[]> = {};
-        frequencyHorizonResults.forEach(({ fh, rankings }) => {
-          byFrequencyHorizon[fh] = rankings;
+        options.frequency_horizons.forEach((fh: string) => {
+          byFrequencyHorizon[fh] = [];
         });
-        
+        frequencyHorizonResponse.rankings.forEach((r) => {
+          if (r.scope_id == null) return;
+          (byFrequencyHorizon[r.scope_id] ??= []).push(r);
+        });
+
         setRankingsData({
           overall: overallResponse.rankings,
           byDefinition,

@@ -3,6 +3,12 @@ export interface RankingFilters {
   frequency_horizon?: string;
   calculation_date?: string;
   limit?: number;
+  /**
+   * Fetch every scope of this type in a single request instead of one request
+   * per scope. `limit` then applies per scope. Mutually exclusive with
+   * definition_id / frequency_horizon.
+   */
+  scope_type?: 'definition' | 'frequency_horizon';
 }
 
 export interface ModelRanking {
@@ -26,6 +32,9 @@ export interface ModelRanking {
   evaluated_count: number | null;
   calculated_at?: string;
   calculation_date: string;
+  // Present so bulk (scope_type) responses can be grouped by scope.
+  scope_id?: string | null;
+  definition_id?: number | null;
 }
 
 export interface RankingsResponse {
@@ -143,6 +152,7 @@ export interface ModelSeriesByDefinition {
 export async function getFilteredRankings(filters: RankingFilters = {}): Promise<RankingsResponse> {
   const params = new URLSearchParams();
   
+  if (filters.scope_type) params.append('scope_type', filters.scope_type);
   if (filters.definition_id) params.append('definition_id', filters.definition_id.toString());
   if (filters.frequency_horizon) params.append('frequency_horizon', filters.frequency_horizon);
   if (filters.calculation_date) params.append('calculation_date', filters.calculation_date);
