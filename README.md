@@ -96,3 +96,25 @@ the Markdown is baked into the image, so a rebuild is what makes a new post appe
 
 For local development, drop `.md` files straight into `content/news/` (it is gitignored)
 and run `npm run dev`.
+
+## User console
+
+Participants create an account, manage their organization and mint their own API keys in
+the **user console**, a separate app on its own domain (`console.ts-arena.live` for
+TS-Arena itself). This site only links to it:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CONSOLE_URL` | *(empty)* | Base URL of the console, no trailing slash. Empty = no console. |
+
+It is read on the server, but the pages that link to the console (`/`, `/add-model`) are
+statically prerendered, so the value is baked in at **build** time. On Coolify it must
+therefore be marked as a **build variable**, like `NEWS_CONTENT_REPO`, or the build will
+not see it and the links will silently not appear. The URL differs per environment, which
+is why it is not hardcoded: a baked-in production URL would send anyone testing a staging
+deployment to the live console.
+
+Leave it unset and every console entry point disappears — the nav item, the footer link,
+and the self-service copy on `/add-model`, which then falls back to asking for an API key
+by email. That is the right default for a fork: the console is a separate service you may
+well not be running.

@@ -2,7 +2,16 @@
 
 import Link from 'next/link';
 
-export default function Footer() {
+interface FooterProps {
+  /**
+   * Absolute URL of the user console, or null if this instance has no
+   * console. Resolved on the server in the root layout — see
+   * `getConsoleUrl()`.
+   */
+  consoleUrl?: string | null;
+}
+
+export default function Footer({ consoleUrl = null }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -12,7 +21,15 @@ export default function Footer() {
           <div className="text-sm text-gray-500">
             © {currentYear} TS-Arena. All rights reserved.
           </div>
-          <div className="flex space-x-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {consoleUrl && (
+              <a
+                href={consoleUrl}
+                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Console
+              </a>
+            )}
             <Link
               href="/impressum"
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"

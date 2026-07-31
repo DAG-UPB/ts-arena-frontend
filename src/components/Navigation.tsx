@@ -12,12 +12,25 @@ interface NavigationProps {
    * not have, and an empty "News" tab is worse than no tab.
    */
   showNews?: boolean;
+  /**
+   * Absolute URL of the user console, or null if this instance has no
+   * console. Also resolved in the root layout — see `getConsoleUrl()`.
+   */
+  consoleUrl?: string | null;
 }
 
-export default function Navigation({ showNews = false }: NavigationProps) {
+interface NavItem {
+  href: string;
+  label: string;
+  /** Renders a plain <a> and never matches the active state — the console
+      lives on another domain, so next/link and pathname do not apply. */
+  external?: boolean;
+}
+
+export default function Navigation({ showNews = false, consoleUrl = null }: NavigationProps) {
   const pathname = usePathname();
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: '/', label: 'Rankings' },
     { href: '/challenges', label: 'Challenges' },
     { href: '/models', label: 'Models' },
@@ -25,6 +38,7 @@ export default function Navigation({ showNews = false }: NavigationProps) {
     { href: '/backtesting-archive', label: 'Backtesting Archive' },
     ...(showNews ? [{ href: '/news', label: 'News' }] : []),
     { href: '/about', label: 'About' },
+    ...(consoleUrl ? [{ href: consoleUrl, label: 'Console', external: true }] : []),
   ];
 
   return (
@@ -41,15 +55,24 @@ export default function Navigation({ showNews = false }: NavigationProps) {
                 </div>
                 <div className="hidden lg:ml-6 lg:flex lg:space-x-8">
                   {navItems.map((item) => {
+                    const baseClasses = 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors';
+                    const inactiveClasses = 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700';
+
+                    if (item.external) {
+                      return (
+                        <a key={item.href} href={item.href} className={`${baseClasses} ${inactiveClasses}`}>
+                          {item.label}
+                        </a>
+                      );
+                    }
+
                     const isActive = pathname === item.href;
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
-                          isActive
-                            ? 'border-blue-500 text-gray-900'
-                            : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                        className={`${baseClasses} ${
+                          isActive ? 'border-blue-500 text-gray-900' : inactiveClasses
                         }`}
                       >
                         {item.label}
@@ -91,6 +114,22 @@ export default function Navigation({ showNews = false }: NavigationProps) {
             {({ close }) => (
               <div className="py-2">
                 {navItems.map((item) => {
+                  const baseClasses = 'flex items-center min-h-[44px] py-2 pl-3 pr-4 border-l-4 text-base font-medium transition-colors';
+                  const inactiveClasses = 'border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700';
+
+                  if (item.external) {
+                    return (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => close()}
+                        className={`${baseClasses} ${inactiveClasses}`}
+                      >
+                        {item.label}
+                      </a>
+                    );
+                  }
+
                   const isActive = pathname === item.href;
                   return (
                     <Link
@@ -98,10 +137,8 @@ export default function Navigation({ showNews = false }: NavigationProps) {
                       href={item.href}
                       onClick={() => close()}
                       aria-current={isActive ? 'page' : undefined}
-                      className={`flex items-center min-h-[44px] py-2 pl-3 pr-4 border-l-4 text-base font-medium transition-colors ${
-                        isActive
-                          ? 'border-blue-500 bg-blue-50 text-gray-900'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                      className={`${baseClasses} ${
+                        isActive ? 'border-blue-500 bg-blue-50 text-gray-900' : inactiveClasses
                       }`}
                     >
                       {item.label}
