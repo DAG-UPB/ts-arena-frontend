@@ -159,22 +159,42 @@ export async function getFilteredRankings(filters: RankingFilters = {}): Promise
   if (filters.limit) params.append('limit', filters.limit.toString());
   
   const url = `/api/v1/models/rankings${params.toString() ? '?' + params.toString() : ''}`;
-  
+
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch rankings: ${response.status}`);
+  }
   return response.json();
 }
 
 export async function getRankingFilters(): Promise<FilterOptions> {
   const url = '/api/v1/models/ranking-filters';
-  
+
   const response = await fetch(url);
-  return response.json();
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ranking filters: ${response.status}`);
+  }
+  const data = await response.json();
+  // Callers read these three arrays straight from render, so a payload that is
+  // missing them takes the whole page down with the error boundary rather than
+  // failing in the fetch handler. Reject it here instead.
+  if (
+    !Array.isArray(data?.calculation_dates) ||
+    !Array.isArray(data?.definitions) ||
+    !Array.isArray(data?.frequency_horizons)
+  ) {
+    throw new Error('Unexpected ranking-filters payload');
+  }
+  return data;
 }
 
 export async function getModelDetails(modelId: string): Promise<ModelDetails> {
   const url = `/api/v1/models/${modelId}`;
 
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch model details: ${response.status}`);
+  }
   const data = await response.json();
   return Array.isArray(data) ? data[0] : data;
 }
@@ -183,6 +203,9 @@ export async function getModelRankings(modelId: string): Promise<ModelDetailRank
   const url = `/api/v1/models/${modelId}/rankings`;
 
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch model rankings: ${response.status}`);
+  }
   return response.json();
 }
 
@@ -228,6 +251,9 @@ export async function getModelSeriesByDefinition(modelId: string): Promise<Model
   const url = `/api/v1/models/${modelId}/series-by-definition`;
 
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch series by definition: ${response.status}`);
+  }
   return response.json();
 }
 
@@ -252,7 +278,10 @@ export async function getModelSeriesForecasts(
   
   const queryString = params.toString();
   const url = `/api/v1/models/${modelId}/definitions/${definitionId}/series/${seriesId}/forecasts${queryString ? '?' + queryString : ''}`;
-  
+
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch series forecasts: ${response.status}`);
+  }
   return response.json();
 }

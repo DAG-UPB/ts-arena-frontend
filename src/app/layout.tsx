@@ -4,6 +4,7 @@ import "./globals.css";
 import Navigation from "@/src/components/Navigation";
 import Footer from "@/src/components/Footer";
 import { hasNews } from "@/src/content/news";
+import { getConsoleUrl } from "@/src/config/console";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,16 +29,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const consoleUrl = getConsoleUrl();
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        <Navigation showNews={hasNews()} />
+        <Navigation showNews={hasNews()} consoleUrl={consoleUrl} />
         <main className="flex-1">
           {children}
         </main>
-        <Footer />
+        <Footer consoleUrl={consoleUrl} />
         {/* Self-hosted Umami on franzia. data-domains is an allowlist: any other
             host serving this build (the Hugging Face Space mirror, a local dev
             server) loads the script but reports nothing. */}

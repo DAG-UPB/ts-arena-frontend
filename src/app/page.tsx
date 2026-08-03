@@ -145,10 +145,12 @@ export default function Home() {
       try {
         setLoading(true);
         
-        // First fetch filter options
+        // First fetch filter options. getRankingFilters throws on a non-OK
+        // response or an unexpected shape, so nothing invalid reaches state —
+        // the render path reads these arrays unguarded.
         const options = await getRankingFilters();
         setFilterOptions(options);
-        
+
         // Set default calculation date to the first (most recent) one
         if (!selectedCalculationDate && options.calculation_dates.length > 0) {
           setSelectedCalculationDate(options.calculation_dates[0].calculation_date);

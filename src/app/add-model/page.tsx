@@ -1,8 +1,14 @@
 import Breadcrumbs from '@/src/components/Breadcrumbs';
-import { Mail, Key, TrendingUp, Trophy, BarChart3, Users, CheckCircle } from 'lucide-react';
+import { Mail, Key, TrendingUp, Trophy, BarChart3, Users, CheckCircle, UserPlus } from 'lucide-react';
 import { siGithub } from 'simple-icons/icons';
+import { getConsoleUrl } from '@/src/config/console';
 
 export default function InfoPage() {
+  // With a console, signing up is self-service and the email address is only
+  // there for people who get stuck. Without one — a fork that does not run
+  // the console — the email route is the only way in, so it stays primary.
+  const consoleUrl = getConsoleUrl();
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumbs items={[{ label: 'Add Model', href: '/add-model' }]} />
@@ -18,27 +24,40 @@ export default function InfoPage() {
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-4 sm:p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">Get Started</h2>
         <p className="text-gray-700 mb-4">
-          Ready to test your forecasting models against the best? Participate actively in our benchmark challenges! 
-          Simply send us an email and we&apos;ll provide you with an API key to get started. Find detailed participation instructions in our{' '}
-          <a 
-            href="https://github.com/DAG-UPB/ts-arena" 
-            target="_blank" 
+          Ready to test your forecasting models against the best? Participate actively in our benchmark challenges!{' '}
+          {consoleUrl
+            ? 'Create an account in the console and mint your own API key.'
+            : 'Simply send us an email and we’ll provide you with an API key to get started.'}{' '}
+          Find detailed participation instructions in our{' '}
+          <a
+            href="https://github.com/DAG-UPB/ts-arena"
+            target="_blank"
             rel="noopener noreferrer"
             className="text-blue-700 hover:text-blue-900 font-semibold underline"
           >
             Git repository
           </a>.
         </p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <a 
-                  href="mailto:DataAnalytics@wiwi.uni-paderborn.de?subject=TS-Arena API Key Request&body=Hello,%0D%0A%0D%0AI would like to participate in the TS-Arena benchmark.%0D%0A%0D%0AOrganization: [Please specify your organization]%0D%0A%0D%0ABest regards"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
-                >
-                  <Mail className="w-5 h-5" />
-                  Request API Key
-                </a>
-                <a 
+                {consoleUrl ? (
+                  <a
+                    href={`${consoleUrl}/register`}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
+                  >
+                    <UserPlus className="w-5 h-5" />
+                    Create an Account
+                  </a>
+                ) : (
+                  <a
+                    href="mailto:DataAnalytics@wiwi.uni-paderborn.de?subject=TS-Arena API Key Request&body=Hello,%0D%0A%0D%0AI would like to participate in the TS-Arena benchmark.%0D%0A%0D%0AOrganization: [Please specify your organization]%0D%0A%0D%0ABest regards"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
+                  >
+                    <Mail className="w-5 h-5" />
+                    Request API Key
+                  </a>
+                )}
+                <a
                   href="mailto:DataAnalytics@wiwi.uni-paderborn.de?subject=TS-Arena Questions&body=Hello,%0D%0A%0D%0AI have questions about participating in the TS-Arena benchmark.%0D%0A%0D%0ABest regards"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-semibold rounded-lg border border-gray-300 transition-colors shadow-sm"
                 >
@@ -46,6 +65,16 @@ export default function InfoPage() {
                   Ask Questions
                 </a>
               </div>
+
+        {consoleUrl && (
+          <p className="mt-4 text-sm text-gray-600">
+            Already have an account?{' '}
+            <a href={`${consoleUrl}/login`} className="text-blue-700 hover:text-blue-900 font-semibold underline">
+              Sign in to the console
+            </a>
+            . If you would rather not manage an account, write to us and we will set you up.
+          </p>
+        )}
       </div>
 
       {/* How it Works */}
@@ -57,10 +86,28 @@ export default function InfoPage() {
               1
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-1">Request an API Key</h3>
-              <p className="text-sm text-gray-600">
-                Email us with your organization name and we&apos;ll send you an API key.
-              </p>
+              {consoleUrl ? (
+                <>
+                  <h3 className="font-medium text-gray-900 mb-1">Create an Account and an API Key</h3>
+                  <p className="text-sm text-gray-600">
+                    Register in the{' '}
+                    <a href={`${consoleUrl}/register`} className="text-blue-700 hover:text-blue-900 underline">
+                      console
+                    </a>
+                    , confirm your email address, then mint an API key there. Naming an organization
+                    creates it with you as its admin and shows it on the leaderboard; leave it blank to
+                    take part as an individual. If your organization already exists, ask its admin to
+                    invite you instead.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-medium text-gray-900 mb-1">Request an API Key</h3>
+                  <p className="text-sm text-gray-600">
+                    Email us with your organization name and we&apos;ll send you an API key.
+                  </p>
+                </>
+              )}
             </div>
           </div>
           
@@ -84,18 +131,62 @@ export default function InfoPage() {
               <h3 className="font-medium text-gray-900 mb-1">Submit Forecasts</h3>
               <p className="text-sm text-gray-600">
                 Obtain time-series context via our API and submit your forecasts before registration closes.
+                Every forecast is committed before the values it predicts exist, which is what makes
+                leakage impossible here.
               </p>
             </div>
           </div>
-          
+
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
               4
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-1">Track Performance</h3>
+              <h3 className="font-medium text-gray-900 mb-1">Wait for the Ground Truth</h3>
               <p className="text-sm text-gray-600">
-                During the active phase, your model is evaluated on live data. Monitor performance on leaderboards and explore forecasts through interactive plots.
+                Once registration closes, no further forecasts are accepted for that round. The round then
+                plays out on live data, and nothing can be scored until every real value it covers has
+                arrived. For a long horizon that wait is the length of the horizon itself.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
+              5
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900 mb-1">Evaluation</h3>
+              <p className="text-sm text-gray-600">
+                When the ground truth for a round is complete, your forecast is scored automatically. The
+                check runs every 30 minutes, so results follow shortly after the last value lands rather
+                than the moment it does. The error metrics themselves are in the code on{' '}
+                <a
+                  href="https://github.com/DAG-UPB/ts-arena"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 hover:text-blue-900 underline"
+                >
+                  GitHub
+                </a>
+                .
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
+              6
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900 mb-1">Where You Appear</h3>
+              <p className="text-sm text-gray-600">
+                A scored model shows up in that challenge&apos;s leaderboard and in the aggregate views
+                (domain, category, frequency). The overall ranking is stricter: a model enters it only once
+                it has taken part in every challenge, and in at least half of each challenge&apos;s rounds
+                since it joined, so nobody gains by covering only the challenges that suit them. Rankings
+                are recomputed four times a day. You can follow your model on the leaderboards and inspect
+                individual forecasts in the interactive plots.
               </p>
             </div>
           </div>
@@ -154,7 +245,13 @@ export default function InfoPage() {
         <div className="space-y-2">
           <div className="flex gap-2 items-start">
             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <span className="text-gray-700">Valid organization or affiliation</span>
+            {/* An organization is optional in the console — individuals take part too,
+                so this must not read as a hard requirement any more. */}
+            <span className="text-gray-700">
+              {consoleUrl
+                ? 'A verified email address; an organization is optional'
+                : 'Valid organization or affiliation'}
+            </span>
           </div>
           <div className="flex gap-2 items-start">
             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
