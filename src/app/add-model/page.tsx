@@ -26,7 +26,7 @@ export default function InfoPage() {
         <p className="text-gray-700 mb-4">
           Ready to test your forecasting models against the best? Participate actively in our benchmark challenges!{' '}
           {consoleUrl
-            ? 'Create an account in the console and mint your own API key — no waiting on us.'
+            ? 'Create an account in the console and mint your own API key.'
             : 'Simply send us an email and we’ll provide you with an API key to get started.'}{' '}
           Find detailed participation instructions in our{' '}
           <a
@@ -131,18 +131,62 @@ export default function InfoPage() {
               <h3 className="font-medium text-gray-900 mb-1">Submit Forecasts</h3>
               <p className="text-sm text-gray-600">
                 Obtain time-series context via our API and submit your forecasts before registration closes.
+                Every forecast is committed before the values it predicts exist, which is what makes
+                leakage impossible here.
               </p>
             </div>
           </div>
-          
+
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
               4
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-1">Track Performance</h3>
+              <h3 className="font-medium text-gray-900 mb-1">Wait for the Ground Truth</h3>
               <p className="text-sm text-gray-600">
-                During the active phase, your model is evaluated on live data. Monitor performance on leaderboards and explore forecasts through interactive plots.
+                Once registration closes, no further forecasts are accepted for that round. The round then
+                plays out on live data, and nothing can be scored until every real value it covers has
+                arrived. For a long horizon that wait is the length of the horizon itself.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
+              5
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900 mb-1">Evaluation</h3>
+              <p className="text-sm text-gray-600">
+                When the ground truth for a round is complete, your forecast is scored automatically. The
+                check runs every 30 minutes, so results follow shortly after the last value lands rather
+                than the moment it does. The error metrics themselves are in the code on{' '}
+                <a
+                  href="https://github.com/DAG-UPB/ts-arena"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 hover:text-blue-900 underline"
+                >
+                  GitHub
+                </a>
+                .
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
+              6
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900 mb-1">Where You Appear</h3>
+              <p className="text-sm text-gray-600">
+                A scored model shows up in that challenge&apos;s leaderboard and in the aggregate views
+                (domain, category, frequency). The overall ranking is stricter: a model enters it only once
+                it has taken part in every challenge, and in at least half of each challenge&apos;s rounds
+                since it joined, so nobody gains by covering only the challenges that suit them. Rankings
+                are recomputed four times a day. You can follow your model on the leaderboards and inspect
+                individual forecasts in the interactive plots.
               </p>
             </div>
           </div>
