@@ -8,8 +8,11 @@ export async function getDefinitionRounds(
   if (options?.status) params.append('status', options.status);
   
   const url = `/api/v1/definitions/${definitionId}/rounds${params.toString() ? '?' + params.toString() : ''}`;
-  
+
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch definition rounds: ${response.status}`);
+  }
   return response.json();
 }
 
