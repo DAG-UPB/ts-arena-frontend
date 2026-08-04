@@ -109,7 +109,11 @@ export interface ModelDetails {
   arxiv_id?: string | null;
 }
 
-/** Single row in `GET /api/v1/models`. Backs the Models tab listing. */
+/**
+ * Single row in `GET /api/v1/models` — the flat list of every registered model.
+ * No page consumes it since the hard-coded Models tab was removed; the endpoint
+ * stays as the service-layer mirror of the dashboard-api.
+ */
 export interface ModelListItem {
   id: number;
   readable_id: string | null;
