@@ -33,7 +33,6 @@ export default function Navigation({ showNews = false, consoleUrl = null }: Navi
   const navItems: NavItem[] = [
     { href: '/', label: 'Rankings' },
     { href: '/challenges', label: 'Challenges' },
-    { href: '/models', label: 'Models' },
     { href: '/add-model', label: 'Add Model' },
     { href: '/backtesting-archive', label: 'Backtesting Archive' },
     ...(showNews ? [{ href: '/news', label: 'News' }] : []),
