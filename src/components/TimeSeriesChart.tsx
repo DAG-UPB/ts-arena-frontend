@@ -250,11 +250,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
         getSeriesForecasts(challengeId, seriesId)
       ]);
 
-      const modelCount = forecasts?.forecasts ? Object.keys(forecasts.forecasts).length : 0;
-      console.log(`✓ Loaded ${dataContext.data?.length || 0} context data points for series ${seriesId}`);
-      console.log(`✓ Loaded ${dataTest.data?.length || 0} test data points for series ${seriesId}`);
-      console.log(`✓ Loaded ${modelCount} forecast models for series ${seriesId}`);
-      
       // Update with loaded data and forecasts
       setSeriesData(prev => prev.map(s =>
         s.series_id === seriesId
@@ -320,8 +315,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
 
         // Fetch all series for this challenge
         const series = await getChallengeSeries(challengeId);
-        console.log(`Fetched ${series.length} series for challenge ${challengeId}`);
-        
+
         // Filter by seriesId if provided
         const filteredSeries = seriesId 
           ? series.filter(s => s.series_id === seriesId)
@@ -399,7 +393,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
       });
       
       if (!model) {
-        console.log('  ❌ NO MODEL FOUND');
         return false;
       }
       
@@ -762,8 +755,6 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                   dashed: true,
                   visible: isVisible,
                 });
-
-                console.log(`CI bounds for model "${modelName}":`, dataArray[0]?.ci ?? 'none');
 
                 // CI bands: push upper + lower (fill tonexty) pairs BEFORE the forecast
                 // line so the line renders on top. Each pair must be consecutive for
