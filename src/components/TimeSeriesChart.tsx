@@ -642,6 +642,10 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
           // Rows for the mobile HTML legend, collected alongside the traces so the
           // two can never drift apart.
           const legendEntries: LegendEntry[] = [];
+          // Whether any forecast in this plot actually produced a shaded band. The
+          // caption below the plot explains the bands, so it is only shown when
+          // there is something to explain.
+          let hasAnyBand = false;
           const visibilityKey = (traceKey: string) => `${series.series_id}|${traceKey}`;
           const resolveVisible = (traceKey: string, fallback: boolean) =>
             traceVisibility[visibilityKey(traceKey)] ?? fallback;
@@ -760,18 +764,38 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                 // line so the line renders on top. Each pair must be consecutive for
                 // fill: 'tonexty' to fill between them correctly.
                 CI_BANDS.forEach(({ lower, upper, alpha }) => {
-                  const hasCI = dataArray.some(
-                    (d: any) => d.ci?.[lower] !== undefined && d.ci?.[upper] !== undefined
-                  );
-                  if (!hasCI) return;
+                  // A band is drawn only where the model actually stated a spread.
+                  // Two cases produce no spread and both are rendered as a gap
+                  // rather than as a flat line hugging the forecast:
+                  //   - the quantile is missing at this point;
+                  //   - the two bounds are equal, i.e. the model submitted identical
+                  //     values for both levels. Some models do this on a large share
+                  //     of their points. Drawn literally it is a zero-height band,
+                  //     which looks exactly like a band-rendering bug; drawing nothing
+                  //     says what the model actually said, which is "no uncertainty
+                  //     here".
+                  const bandAt = (d: { ci?: Record<string, number | undefined> }): [number, number] | null => {
+                    const lo = d.ci?.[lower];
+                    const hi = d.ci?.[upper];
+                    if (lo === undefined || hi === undefined) return null;
+                    if (lo === hi) return null;
+                    return [lo, hi];
+                  };
 
+                  const hasCI = dataArray.some((d: any) => bandAt(d) !== null);
+                  if (!hasCI) return;
+                  hasAnyBand = true;
+
+                  // `null` breaks the fill at that x, leaving a gap. The leading
+                  // entry anchors the band to the last actual so it starts at the
+                  // same place as the forecast line.
                   const ciUpperY = [
                     lastActualPoint.value,
-                    ...dataArray.map((d: any) => d.ci?.[upper] ?? d.y),
+                    ...dataArray.map((d: any) => bandAt(d)?.[1] ?? null),
                   ];
                   const ciLowerY = [
                     lastActualPoint.value,
-                    ...dataArray.map((d: any) => d.ci?.[lower] ?? d.y),
+                    ...dataArray.map((d: any) => bandAt(d)?.[0] ?? null),
                   ];
 
                   // Upper bound (invisible line, no legend entry)
@@ -781,6 +805,8 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                     type: 'scatter',
                     mode: 'lines',
                     line: { width: 0, color: 'transparent' },
+                    // Explicit: the nulls above are gaps, not points to bridge.
+                    connectgaps: false,
                     showlegend: false,
                     legendgroup: `forecast-${idx}`,
                     visible: isVisible ? true : 'legendonly',
@@ -796,6 +822,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                     fill: 'tonexty',
                     fillcolor: hexToRgba(color, alpha),
                     line: { width: 0, color: 'transparent' },
+                    connectgaps: false,
                     showlegend: false,
                     legendgroup: `forecast-${idx}`,
                     visible: isVisible ? true : 'legendonly',
@@ -976,6 +1003,15 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                           entries={legendEntries}
                           onToggle={setTraceVisible}
                         />
+                      )}
+                      {hasAnyBand && (
+                        <p className="mt-2 px-1 text-xs leading-relaxed text-gray-500">
+                          Shaded areas are the forecast&apos;s quantile ranges: the lighter
+                          band spans the 20th to 80th percentile, the darker one the 30th to
+                          70th. They appear only for models that submit quantile forecasts,
+                          and only where the model stated a spread — a gap means it predicted
+                          the same value at both bounds.
+                        </p>
                       )}
                     </>
                   )}
