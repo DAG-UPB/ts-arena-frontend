@@ -384,7 +384,9 @@ export default function Home() {
             </div>
           </div>
           <p className="text-sm text-gray-600 mb-4">
-            Aggregated scores across all challenge definitions and time series. ELO: higher is better. MASE: lower is better. Updated multiple times a day.
+            Aggregated scores across all challenge definitions and time series. ELO: higher is
+            better. MASE and SQL: lower is better. SQL is shown only for models that submit
+            quantile forecasts. Updated multiple times a day.
           </p>
           <RankingTableElo
             rankings={rankingsData.overall}
