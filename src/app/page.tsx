@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
@@ -76,6 +76,15 @@ export default function Home() {
   const [selectedFrequency, setSelectedFrequency] = useState<string | null>(null);
   const [selectedHorizon, setSelectedHorizon] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  /**
+   * The filter options, cached across the two passes of `fetchAllData`. The
+   * effect runs once to learn the default calculation date and once to fetch
+   * the rankings for it; without this the second pass would re-request an
+   * identical `ranking-filters` response and hold the six rankings calls
+   * behind it. A ref, not state — this is a cache, and writing it must not
+   * re-trigger the effect that fills it.
+   */
+  const filterOptionsRef = useRef<FilterOptions | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [oldestActiveRound, setOldestActiveRound] = useState<any>(null);
   const [roundLoading, setRoundLoading] = useState(true);
@@ -184,18 +193,28 @@ export default function Home() {
     if (!isMounted) return;
 
     const fetchAllData = async () => {
+      // Whether this pass ends with the data on screen. The first pass only
+      // establishes the default calculation date and returns early to re-run;
+      // clearing `loading` there would flip it false → true → false, and every
+      // one of those flips swaps the whole page tree. See the render below.
+      let settled = true;
       try {
         setLoading(true);
-        
+
         // First fetch filter options. getRankingFilters throws on a non-OK
         // response or an unexpected shape, so nothing invalid reaches state —
         // the render path reads these arrays unguarded.
-        const options = await getRankingFilters();
+        const options = filterOptionsRef.current ?? await getRankingFilters();
+        filterOptionsRef.current = options;
         setFilterOptions(options);
 
-        // Set default calculation date to the first (most recent) one
-        if (!selectedCalculationDate && options.calculation_dates.length > 0) {
-          setSelectedCalculationDate(options.calculation_dates[0].calculation_date);
+        // Set default calculation date to the first (most recent) one. Guard on
+        // the value being truthy, not just present: `settled = false` leaves the
+        // spinner up for the re-run, and a blank date would never trigger one.
+        const defaultCalculationDate = options.calculation_dates[0]?.calculation_date;
+        if (!selectedCalculationDate && defaultCalculationDate) {
+          setSelectedCalculationDate(defaultCalculationDate);
+          settled = false;
           return; // Will re-run when selectedCalculationDate is set
         }
         
@@ -269,29 +288,18 @@ export default function Home() {
       } catch (error) {
         console.error('Error fetching rankings:', error);
       } finally {
-        setLoading(false);
+        if (settled) setLoading(false);
       }
     };
 
     fetchAllData();
   }, [selectedCalculationDate, isMounted]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-        <main className="max-w-7xl mx-auto">
-          <Breadcrumbs items={[{ label: 'Rankings', href: '/' }]} />
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">
-            TS-Arena – Live Time-Series Forecasting Benchmark
-          </h1>
-          <div className="text-center py-12">
-            <div className="text-lg text-gray-600">Loading ranking...</div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
+  // `loading` covers the rankings only, and is applied to the ranking sections
+  // below rather than to the whole page. Returning a different tree here would
+  // unmount TimeSeriesChart every time the flag moves, throwing away the data
+  // it had already fetched and making it start over. Nothing in the chart
+  // depends on the rankings, so it renders on its own schedule.
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <main className="max-w-7xl mx-auto">
@@ -332,6 +340,15 @@ export default function Home() {
           </div>
         )}
 
+        {/* The three ranking sections share one loading state. Only this
+            subtree swaps while the rankings load — the chart above keeps
+            its mount and its in-flight requests. */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-lg text-gray-600">Loading ranking...</div>
+          </div>
+        ) : (
+          <>
         {/* Overall Ranking (Full Table) */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-1">
@@ -480,6 +497,8 @@ export default function Home() {
             <p className="text-sm text-gray-500">No frequency / horizon combinations available.</p>
           )}
         </div>
+          </>
+        )}
       </main>
     </div>
   );

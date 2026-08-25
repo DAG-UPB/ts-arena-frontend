@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import type { PlotParams } from 'react-plotly.js';
-import type { ForecastsResponse, ForecastData, Model } from '@/src/types/challenge';
+import type { ChallengeSeries, ForecastsResponse, ForecastData, Model } from '@/src/types/challenge';
 import { getChallengeSeries, getSeriesData, getSeriesForecasts, getRoundModels } from '@/src/services/roundService';
 import { useIsMobile } from '@/src/hooks/useIsMobile';
 import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
@@ -209,6 +209,16 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
   const [models, setModels] = useState<Model[]>([]);
   const [modelsLoading, setModelsLoading] = useState(true);
 
+  /**
+   * Series metadata by series_id, populated by the fetch effect below. It is the
+   * same `getChallengeSeries` response the effect already has, kept so that
+   * loading a series' data does not re-request the whole list just to read one
+   * series' time range. A ref because `loadForecastsForSeries` is a dependency
+   * of that effect — writing state here would re-run it in a loop. Cleared when
+   * the round changes so metadata from a previous round is never reused.
+   */
+  const seriesMetaRef = useRef<Record<number, ChallengeSeries>>({});
+
   // Function to load data and forecasts for a specific series
   const loadForecastsForSeries = useCallback(async (seriesId: number) => {
     // Check if data is already loaded or loading
@@ -227,10 +237,16 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
     });
 
     try {
-      // Get the series metadata to fetch context and test data
-      const series = await getChallengeSeries(challengeId);
-      const currentSeries = series.find(s => s.series_id === seriesId);
-      
+      // Get the series metadata to fetch context and test data. The fetch effect
+      // has normally already cached it; only fall back to the network for a
+      // series it never saw.
+      let currentSeries = seriesMetaRef.current[seriesId];
+      if (!currentSeries) {
+        const series = await getChallengeSeries(challengeId);
+        series.forEach(s => { seriesMetaRef.current[s.series_id] = s; });
+        currentSeries = seriesMetaRef.current[seriesId];
+      }
+
       if (!currentSeries) {
         throw new Error(`Series ${seriesId} not found`);
       }
@@ -287,6 +303,15 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
     });
   };
 
+  // Start fetching the Plotly chunk (~350 KB) on mount. `Plot` only renders once
+  // the data has arrived, so without this its download begins after the last
+  // request finishes instead of alongside them.
+  useEffect(() => {
+    import('@/src/components/PlotlyPlot').catch(() => {
+      // Nothing to do: rendering <Plot> will retry the import and surface it.
+    });
+  }, []);
+
   // Fetch models for the challenge
   useEffect(() => {
     async function fetchModels() {
@@ -315,6 +340,11 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
 
         // Fetch all series for this challenge
         const series = await getChallengeSeries(challengeId);
+
+        // Cache the metadata so loadForecastsForSeries does not fetch it again.
+        // Replace rather than merge — a stale entry from the previous round
+        // would carry that round's time range.
+        seriesMetaRef.current = Object.fromEntries(series.map(s => [s.series_id, s]));
 
         // Filter by seriesId if provided
         const filteredSeries = seriesId 
