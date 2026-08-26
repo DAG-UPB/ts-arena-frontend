@@ -1038,9 +1038,7 @@ export default function TimeSeriesChart({ challengeId, challengeName, challengeD
                         <p className="mt-2 px-1 text-xs leading-relaxed text-gray-500">
                           Shaded areas are the forecast&apos;s quantile ranges: the lighter
                           band spans the 20th to 80th percentile, the darker one the 30th to
-                          70th. They appear only for models that submit quantile forecasts,
-                          and only where the model stated a spread — a gap means it predicted
-                          the same value at both bounds.
+                          70th. They appear only for models that submit quantile forecasts.
                         </p>
                       )}
                     </>
