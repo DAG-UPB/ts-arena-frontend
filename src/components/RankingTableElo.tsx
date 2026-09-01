@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import {
@@ -12,13 +12,18 @@ import {
   flexRender,
   SortDirection,
 } from '@tanstack/react-table';
-import { Info } from 'lucide-react';
+import { ChevronDown, Info } from 'lucide-react';
 import { ModelRanking } from '@/src/services/modelService';
 
 interface RankingTableEloProps {
   rankings: ModelRanking[];
   compact?: boolean;
   title?: string;
+  /**
+   * How many rows to show while collapsed. The board still holds every model —
+   * sorting and the column filters act on all of them, and a footer control
+   * expands to the full list. Omit to always show everything.
+   */
   limit?: number;
   definitionId?: number;
   /**
@@ -106,6 +111,13 @@ function HeaderWithInfo({
   );
 }
 
+/**
+ * Stand-in for an absent board. Callers routinely write `rankings={map[id] || []}`,
+ * which mints a new empty array every render; funnelling those through one
+ * constant keeps the `data` reference react-table sees stable. See the memo below.
+ */
+const NO_RANKINGS: ModelRanking[] = [];
+
 /** Tooltip body for the SQL column. Kept next to the header that uses it. */
 function SqlExplanation() {
   return (
@@ -127,18 +139,17 @@ export default function RankingTableElo({
   sqlEligibleModelIds,
 }: RankingTableEloProps) {
   const router = useRouter();
+  const [expanded, setExpanded] = useState(false);
 
   const handleRowClick = (modelId: string, modelName: string) => {
     router.push(`/models/${modelId}`);
   };
 
-  // Apply limit if specified. Memoize so the `data` reference passed to
-  // useReactTable is stable across renders — an unstable data ref each render
-  // makes react-table's auto-reset loop infinitely (freezing the page).
-  const displayedRankings = useMemo(
-    () => (limit ? rankings.slice(0, limit) : rankings),
-    [rankings, limit]
-  );
+  // The whole board goes to react-table; `limit` cuts the *rendered* rows further
+  // down, after sorting and filtering, so both act on every model rather than on
+  // the first ten. Memoized so the `data` reference is stable across renders — an
+  // unstable one makes react-table's auto-reset loop infinitely (freezing the page).
+  const data = useMemo(() => (rankings?.length ? rankings : NO_RANKINGS), [rankings]);
 
   const fullColumns = useMemo<ColumnDef<ModelRanking>[]>(
     () => [
@@ -381,7 +392,7 @@ export default function RankingTableElo({
   const columns = compact ? compactColumns : fullColumns;
 
   const table = useReactTable({
-    data: displayedRankings ?? [],
+    data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -395,6 +406,10 @@ export default function RankingTableElo({
       ],
     },
   });
+
+  const allRows = table.getRowModel().rows;
+  const collapsible = limit !== undefined && allRows.length > limit;
+  const rows = collapsible && !expanded ? allRows.slice(0, limit) : allRows;
 
   const getSortIcon = (isSorted: false | SortDirection) => {
     if (!isSorted) {
@@ -423,7 +438,7 @@ export default function RankingTableElo({
           horizontal room, which pushes the ELO score (the point of the page)
           off-screen on a phone. */}
       <div className="md:hidden p-3 space-y-2">
-        {table.getRowModel().rows.map((row) => {
+        {rows.map((row) => {
           const model = row.original;
           const eloUpperDiff = model.elo_ci_upper - model.elo_rating_median;
           const eloLowerDiff = model.elo_rating_median - model.elo_ci_lower;
@@ -528,7 +543,7 @@ export default function RankingTableElo({
             ))}
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {table.getRowModel().rows.map((row) => (
+            {rows.map((row) => (
               <tr 
                 key={row.id} 
                 className="hover:bg-gray-50 cursor-pointer transition-colors"
@@ -548,9 +563,28 @@ export default function RankingTableElo({
         </table>
       </div>
 
-      {table.getRowModel().rows.length === 0 && (
+      {allRows.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           No rankings found.
+        </div>
+      )}
+
+      {collapsible && (
+        <div className="border-t border-gray-200 bg-gray-50">
+          <button
+            type="button"
+            onClick={() => setExpanded((wasExpanded) => !wasExpanded)}
+            aria-expanded={expanded}
+            className="flex w-full min-h-[44px] items-center justify-center gap-1.5 px-6 text-sm font-medium text-blue-600 transition-colors hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
+          >
+            <span>
+              {expanded ? `Show top ${limit}` : `Show all ${allRows.length} models`}
+            </span>
+            <ChevronDown
+              className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+              aria-hidden="true"
+            />
+          </button>
         </div>
       )}
     </div>
