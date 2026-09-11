@@ -18,8 +18,11 @@ const FIRST_CANCELLED = '28 April 2026';
 const LAST_CANCELLED = '10 September 2026';
 const BOARD_COUNTS_THROUGH = '27 April 2026';
 
-/** The news post explaining the cancellation. */
-const NEWS_POST_HREF = '/news/day-ahead-price-rounds-cancelled';
+/** How many rounds were cancelled, across both affected challenges. */
+const ROUNDS_CANCELLED = 262;
+
+/** The news section, not the post itself, so the banner never outlives the link. */
+const NEWS_HREF = '/news';
 
 /**
  * The front page banner retires itself on this date (UTC), roughly four days after the
@@ -92,17 +95,15 @@ export function CancelledRoundsBanner() {
 
   return (
     <Link
-      href={NEWS_POST_HREF}
+      href={NEWS_HREF}
       className="mb-8 bg-yellow-50 border border-yellow-200 rounded-lg px-4 sm:px-6 py-4 flex items-center gap-3 hover:bg-yellow-100 hover:border-yellow-300 transition-colors"
     >
       <AlertTriangle className="h-6 w-6 text-yellow-600 flex-shrink-0" aria-hidden="true" />
       <p className="text-sm text-yellow-800">
         <span className="font-medium">
-          Rounds on the SMARD day-ahead price challenges from {FIRST_CANCELLED} to {LAST_CANCELLED}{' '}
-          have been cancelled.
+          {ROUNDS_CANCELLED} rounds on the two SMARD day-ahead challenges have been cancelled
         </span>{' '}
-        Their forecast window overlapped prices that were already public. All rankings are being
-        recalculated, including the overall ranking below.
+        and all rankings are being recalculated. See the news section for details.
       </p>
       <ChevronRight className="h-5 w-5 text-yellow-600 ml-auto flex-shrink-0" aria-hidden="true" />
     </Link>
