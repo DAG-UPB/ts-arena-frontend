@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -77,12 +77,16 @@ export default function CancelledRoundsNotice({ definitionId }: CancelledRoundsN
  * Delete this along with the notice once the cancellation is no longer news.
  */
 export function CancelledRoundsBanner() {
-  // Decided after mount so the expiry uses the reader's clock and never renders a different
-  // banner on the server than on the client.
-  const [expired, setExpired] = useState(true);
-  useEffect(() => setExpired(Date.now() >= BANNER_HIDE_FROM), []);
+  // The expiry has to be evaluated in the browser: this page can be prerendered, and a check
+  // done at build time would freeze the banner's state into the HTML. Subscribing to nothing
+  // yields false on the server and true once hydrated, so the reader's own clock decides.
+  const visible = useSyncExternalStore(
+    () => () => {},
+    () => Date.now() < BANNER_HIDE_FROM,
+    () => false
+  );
 
-  if (expired) {
+  if (!visible) {
     return null;
   }
 
