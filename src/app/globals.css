@@ -126,3 +126,14 @@ body {
   background: #f9fafb;
   font-weight: 600;
 }
+
+/*
+ * In-page anchor jumps (the rankings page section menu) glide rather than
+ * teleport, so the reader keeps their bearings. Motion is opt-out: readers who
+ * have asked for less of it keep the instant jump.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
