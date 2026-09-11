@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -15,8 +18,16 @@ const FIRST_CANCELLED = '28 April 2026';
 const LAST_CANCELLED = '10 September 2026';
 const BOARD_COUNTS_THROUGH = '27 April 2026';
 
-/** The news post explaining the cancellation. Remove this banner when the post is old news. */
+/** The news post explaining the cancellation. */
 const NEWS_POST_HREF = '/news/day-ahead-price-rounds-cancelled';
+
+/**
+ * The front page banner retires itself on this date (UTC), roughly four days after the
+ * cancellation, by which point the affected models have new evaluations and are back on the
+ * boards. Nobody has to remember to take it down. Push the date out if the boards recover
+ * more slowly than expected.
+ */
+const BANNER_HIDE_FROM = Date.parse('2026-09-15T00:00:00Z');
 
 interface CancelledRoundsNoticeProps {
   definitionId: number | null | undefined;
@@ -66,6 +77,15 @@ export default function CancelledRoundsNotice({ definitionId }: CancelledRoundsN
  * Delete this along with the notice once the cancellation is no longer news.
  */
 export function CancelledRoundsBanner() {
+  // Decided after mount so the expiry uses the reader's clock and never renders a different
+  // banner on the server than on the client.
+  const [expired, setExpired] = useState(true);
+  useEffect(() => setExpired(Date.now() >= BANNER_HIDE_FROM), []);
+
+  if (expired) {
+    return null;
+  }
+
   return (
     <Link
       href={NEWS_POST_HREF}
