@@ -6,6 +6,7 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
 import RankingTableElo from '@/src/components/RankingTableElo';
+import CancelledRoundsNotice from '@/src/components/CancelledRoundsNotice';
 import Pagination from '@/src/components/Pagination';
 import DetailsCard from '@/src/components/DetailsCard';
 import ChallengeRoundsList from '@/src/components/ChallengeRoundsList';
@@ -307,6 +308,8 @@ export default function ChallengeDefinitionDetail() {
             </div>
           </div>
           
+          <CancelledRoundsNotice definitionId={definition.id} />
+
           {rankingsLoading ? (
             <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
               Loading rankings...
