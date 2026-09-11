@@ -5,6 +5,7 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
 import RankingTableElo from '@/src/components/RankingTableElo';
+import CancelledRoundsNotice from '@/src/components/CancelledRoundsNotice';
 import SectionNav, { NavSection } from '@/src/components/SectionNav';
 import TimeSeriesChart from '@/src/components/TimeSeriesChart';
 import { getFilteredRankings, getRankingFilters, collectSqlEligible, ModelRanking, FilterOptions, ChallengeDefinition } from '@/src/services/modelService';
@@ -469,6 +470,8 @@ export default function Home() {
               {loading ? (
                 <RankingPlaceholder />
               ) : selectedDefinition ? (
+                <>
+                <CancelledRoundsNotice definitionId={selectedDefinition.id} />
                 <RankingTableElo
                   key={selectedDefinition.id}
                   rankings={rankingsData.byDefinition[selectedDefinition.id] || []}
@@ -477,6 +480,7 @@ export default function Home() {
                   title={selectedDefinition.name}
                   definitionId={selectedDefinition.id}
                 />
+                </>
               ) : (
                 <p className="text-sm text-gray-500">No challenge definitions available.</p>
               )}
