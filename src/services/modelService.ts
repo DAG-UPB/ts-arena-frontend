@@ -110,12 +110,15 @@ export interface DefinitionRankingWithHistory {
 export interface ModelDetails {
   readable_id: string;
   name: string;
-  model_family: string;
-  model_size: number;
-  hosting: string;
-  architecture: string;
-  pretraining_data: string;
-  publishing_date: string;
+  // Registration requires only a name and a readable id; every descriptive field
+  // below is optional and comes back null for models that never filled it in —
+  // externally hosted models in particular register with almost nothing.
+  model_family: string | null;
+  model_size: number | null;
+  hosting: string | null;
+  architecture: string | null;
+  pretraining_data: string | null;
+  publishing_date: string | null;
   // Optional discovery / provenance metadata (see backend ticket #43).
   paper_url?: string | null;
   repo_url?: string | null;
