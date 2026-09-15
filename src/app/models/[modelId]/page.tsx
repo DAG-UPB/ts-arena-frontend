@@ -13,6 +13,37 @@ import { getModelRankings, ModelDetailRankings, getModelSeriesByDefinition, Mode
 /** Enough to cover the global board; it holds well under a hundred models. */
 const GLOBAL_BOARD_LIMIT = 500;
 
+/** Shown in place of a metadata field the model never supplied. */
+const UNSPECIFIED = 'Not specified';
+
+function formatModelSize(sizeInMillions: number | null): string {
+  if (sizeInMillions === null || sizeInMillions === undefined) return UNSPECIFIED;
+  return `${sizeInMillions.toLocaleString()}M parameters`;
+}
+
+function formatPublishingDate(publishingDate: string | null): string {
+  // `new Date(null)` is the epoch, not an invalid date, so a missing value would
+  // otherwise render as "January 1, 1970".
+  if (!publishingDate) return UNSPECIFIED;
+  const date = new Date(publishingDate);
+  if (Number.isNaN(date.getTime())) return UNSPECIFIED;
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+/**
+ * Unwraps one settled request, discarding a rejection so the panels that did load
+ * still render. Each panel below has its own "failed to load" state.
+ */
+function valueOf<T>(result: PromiseSettledResult<T>, what: string): T | null {
+  if (result.status === 'fulfilled') return result.value;
+  console.error(`Error fetching ${what}:`, result.reason);
+  return null;
+}
+
 export default function ModelDetailPage() {
   const params = useParams();
   const modelId = params.modelId as string;
@@ -27,42 +58,41 @@ export default function ModelDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!modelId) {
-      setLoading(false);
-      return;
-    }
-
     const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [details, rankings, series, activeRounds, globalBoard, globalSqlBoard] =
-          await Promise.all([
-            getModelDetails(modelId),
-            getModelRankings(modelId),
-            getModelSeriesByDefinition(modelId),
-            getModelActiveRounds(modelId),
-            // The per-model rankings endpoint returns ELO only, so the accuracy
-            // figures come from this model's row on the global boards.
-            getFilteredRankings({ limit: GLOBAL_BOARD_LIMIT }),
-            getFilteredRankings({ limit: GLOBAL_BOARD_LIMIT, metric: 'sql' }),
-          ]);
-        setModelDetails(details);
-        setRankingsData(rankings);
-        setSeriesData(series);
-        setActiveRoundsData(activeRounds);
-
-        const numericId = Number(modelId);
-        setGlobalRanking(
-          globalBoard.rankings.find((r) => r.model_id === numericId) ?? null
-        );
-        setSqlEligible(
-          globalSqlBoard.rankings.some((r) => r.model_id === numericId)
-        );
-      } catch (error) {
-        console.error('Error fetching model data:', error);
-      } finally {
+      if (!modelId) {
         setLoading(false);
+        return;
       }
+      setLoading(true);
+      // Settled, not all: a model that has not been ranked yet 404s on the rankings
+      // endpoints, and that must not take the rest of the page down with it.
+      const [details, rankings, series, activeRounds, globalBoard, globalSqlBoard] =
+        await Promise.allSettled([
+          getModelDetails(modelId),
+          getModelRankings(modelId),
+          getModelSeriesByDefinition(modelId),
+          getModelActiveRounds(modelId),
+          // The per-model rankings endpoint returns ELO only, so the accuracy
+          // figures come from this model's row on the global boards.
+          getFilteredRankings({ limit: GLOBAL_BOARD_LIMIT }),
+          getFilteredRankings({ limit: GLOBAL_BOARD_LIMIT, metric: 'sql' }),
+        ]);
+
+      setModelDetails(valueOf(details, 'model details'));
+      setRankingsData(valueOf(rankings, 'model rankings'));
+      setSeriesData(valueOf(series, 'series by definition'));
+      setActiveRoundsData(valueOf(activeRounds, 'active rounds'));
+
+      const numericId = Number(modelId);
+      const board = valueOf(globalBoard, 'global rankings');
+      const sqlBoard = valueOf(globalSqlBoard, 'global SQL rankings');
+      setGlobalRanking(
+        board?.rankings.find((r) => r.model_id === numericId) ?? null
+      );
+      setSqlEligible(
+        sqlBoard?.rankings.some((r) => r.model_id === numericId) ?? false
+      );
+      setLoading(false);
     };
 
     fetchData();
@@ -91,31 +121,27 @@ export default function ModelDetailPage() {
               fields={[
                 {
                   label: 'Model Family',
-                  value: modelDetails.model_family
+                  value: modelDetails.model_family ?? UNSPECIFIED
                 },
                 {
                   label: 'Architecture',
-                  value: modelDetails.architecture
+                  value: modelDetails.architecture ?? UNSPECIFIED
                 },
                 {
                   label: 'Model Size',
-                  value: `${modelDetails.model_size.toLocaleString()}M parameters`
+                  value: formatModelSize(modelDetails.model_size)
                 },
                 {
                   label: 'Pretraining Data',
-                  value: modelDetails.pretraining_data
+                  value: modelDetails.pretraining_data ?? UNSPECIFIED
                 },
                 {
                   label: 'Hosting',
-                  value: modelDetails.hosting
+                  value: modelDetails.hosting ?? UNSPECIFIED
                 },
                 {
                   label: 'Publishing Date',
-                  value: new Date(modelDetails.publishing_date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })
+                  value: formatPublishingDate(modelDetails.publishing_date)
                 }
               ]}
             />
