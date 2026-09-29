@@ -10,6 +10,7 @@ import SectionNav, { NavSection } from '@/src/components/SectionNav';
 import TimeSeriesChart from '@/src/components/TimeSeriesChart';
 import { getFilteredRankings, getRankingFilters, collectSqlEligible, ModelRanking, FilterOptions, ChallengeDefinition } from '@/src/services/modelService';
 import { getDefinitionRounds } from '@/src/services/definitionService';
+import type { TrackView } from '@/src/lib/tracks';
 
 const DEFINITION_ID:number = parseInt(process.env.NEXT_PUBLIC_DEFINITION_ID || '225');
 const SERIES_ID:number = parseInt(process.env.NEXT_PUBLIC_SERIES_ID || '1373');
@@ -105,6 +106,12 @@ export default function Home() {
   const [selectedFrequency, setSelectedFrequency] = useState<string | null>(null);
   const [selectedHorizon, setSelectedHorizon] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  /**
+   * One track choice for the whole page: every board shows the switch, and flipping
+   * it on one flips them all, so the boards never silently disagree about what they
+   * are showing. Client-side only — the rankings already carry each row's track.
+   */
+  const [trackView, setTrackView] = useState<TrackView>('all');
   /**
    * The filter options, cached across the two passes of `fetchAllData`. The
    * effect runs once to learn the default calculation date and once to fetch
@@ -433,10 +440,18 @@ export default function Home() {
                   </select>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-gray-600 mb-2">
                 Aggregated scores across all challenge definitions and time series. ELO: higher is
                 better. MASE and SQL: lower is better. SQL is shown only for models that submit
                 quantile forecasts. Updated multiple times a day.
+              </p>
+              <p className="text-sm text-gray-600 mb-4">
+                Models compete in two tracks, shown together by default.{' '}
+                <span className="font-medium text-indigo-700">Reference Track</span> models are
+                implemented in ts-arena-models and run by TS-Arena on exactly the context given at
+                registration.{' '}
+                <span className="font-medium text-teal-700">Open Track</span> models are submitted
+                by participants, with any method and any additional data.
               </p>
               {loading ? (
                 <RankingPlaceholder />
@@ -445,6 +460,8 @@ export default function Home() {
                   rankings={rankingsData.overall}
                   sqlEligibleModelIds={rankingsData.sqlEligible.overall}
                   limit={COLLAPSED_ROWS}
+                  trackView={trackView}
+                  onTrackViewChange={setTrackView}
                 />
               )}
             </section>
@@ -481,6 +498,8 @@ export default function Home() {
                   limit={COLLAPSED_ROWS}
                   title={selectedDefinition.name}
                   definitionId={selectedDefinition.id}
+                  trackView={trackView}
+                  onTrackViewChange={setTrackView}
                 />
                 </>
               ) : (
@@ -537,6 +556,8 @@ export default function Home() {
                   sqlEligibleModelIds={rankingsData.sqlEligible.byFrequencyHorizon[selectedFh]}
                   limit={COLLAPSED_ROWS}
                   title={formatFrequencyHorizon(selectedFh)}
+                  trackView={trackView}
+                  onTrackViewChange={setTrackView}
                 />
               ) : (
                 <p className="text-sm text-gray-500">No frequency / horizon combinations available.</p>

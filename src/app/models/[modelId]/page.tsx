@@ -8,10 +8,37 @@ import ModelSeriesList from '@/src/components/ModelSeriesList';
 import DetailsCard from '@/src/components/DetailsCard';
 import ModelActiveRounds from '@/src/components/ModelActiveRounds';
 import ModelMetricSummary from '@/src/components/ModelMetricSummary';
+import TrackBadge from '@/src/components/TrackBadge';
+import { REFERENCE_MODELS_REPO_URL, isTrack, type Track } from '@/src/lib/tracks';
 import { getModelRankings, ModelDetailRankings, getModelSeriesByDefinition, ModelSeriesByDefinition, getModelDetails, ModelDetails, getModelActiveRounds, ModelActiveRoundsResponse, getFilteredRankings, ModelRanking } from '@/src/services/modelService';
 
 /** Enough to cover the global board; it holds well under a hundred models. */
 const GLOBAL_BOARD_LIMIT = 500;
+
+/** What the model's track means, for the Track field of the details card. */
+function trackDescription(track: Track) {
+  if (track === 'reference') {
+    return (
+      <span className="text-sm font-normal text-gray-700">
+        Implemented in{' '}
+        <a
+          href={REFERENCE_MODELS_REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800"
+        >
+          ts-arena-models
+        </a>{' '}
+        and run by TS-Arena on exactly the context given at registration.
+      </span>
+    );
+  }
+  return (
+    <span className="text-sm font-normal text-gray-700">
+      Submitted by a participant, with any method and any additional data.
+    </span>
+  );
+}
 
 /** Shown in place of a metadata field the model never supplied. */
 const UNSPECIFIED = 'Not specified';
@@ -116,9 +143,21 @@ export default function ModelDetailPage() {
           <>
             <DetailsCard
               title={modelDetails.name}
+              badge={<TrackBadge track={modelDetails.track} long />}
               id={`Model ID: ${modelDetails.readable_id}`}
               description={modelDetails.description ?? undefined}
               fields={[
+                ...(isTrack(modelDetails.track)
+                  ? [{
+                      label: 'Track',
+                      value: (
+                        <span className="flex flex-col gap-1 items-start">
+                          <TrackBadge track={modelDetails.track} long />
+                          {trackDescription(modelDetails.track)}
+                        </span>
+                      ),
+                    }]
+                  : []),
                 {
                   label: 'Model Family',
                   value: modelDetails.model_family ?? UNSPECIFIED

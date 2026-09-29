@@ -8,6 +8,8 @@ export interface DetailField {
 
 interface DetailsCardProps {
   title: string;
+  /** Shown beside the title, e.g. the model's track. */
+  badge?: React.ReactNode;
   id: string;
   description?: string;
   displayText?: string | null;
@@ -20,6 +22,7 @@ interface DetailsCardProps {
 
 export default function DetailsCard({
   title,
+  badge,
   id,
   description,
   displayText,
@@ -30,7 +33,10 @@ export default function DetailsCard({
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       {/* Header */}
       <div className="px-4 sm:px-6 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-        <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+          {badge}
+        </div>
         <p className="mt-2 text-sm font-medium text-gray-500">{id}</p>
       </div>
 

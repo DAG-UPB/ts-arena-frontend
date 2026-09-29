@@ -3,6 +3,7 @@
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Info } from 'lucide-react';
 import { ModelRanking } from '@/src/services/modelService';
+import { TRACK_LABEL, isTrack } from '@/src/lib/tracks';
 
 interface ModelMetricSummaryProps {
   /** This model's row on the global (MASE) board, or null if it has none yet. */
@@ -41,6 +42,9 @@ export default function ModelMetricSummary({ ranking, sqlEligible }: ModelMetric
             {ranking.elo_rating_median.toFixed(1)}
             <span className="ml-2 text-xs font-normal text-gray-500">
               rank {ranking.rank_position}
+              {isTrack(ranking.track) && ranking.track_rank_position != null && (
+                <> · {ranking.track_rank_position} in {TRACK_LABEL[ranking.track]} Track</>
+              )}
             </span>
           </dd>
         </div>
