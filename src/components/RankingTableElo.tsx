@@ -14,6 +14,9 @@ import {
 } from '@tanstack/react-table';
 import { ChevronDown, Info } from 'lucide-react';
 import { ModelRanking } from '@/src/services/modelService';
+import TrackBadge from '@/src/components/TrackBadge';
+import TrackSwitch from '@/src/components/TrackSwitch';
+import { TRACK_STYLE, TRACK_VIEW_LABEL, TrackView, filterByTrack, isTrack } from '@/src/lib/tracks';
 
 interface RankingTableEloProps {
   rankings: ModelRanking[];
@@ -34,6 +37,14 @@ interface RankingTableEloProps {
    * was not made, in which case the column shows nothing rather than guessing.
    */
   sqlEligibleModelIds?: Set<number>;
+  /**
+   * Which track(s) to show. 'all' (the default) is the combined board with one rank
+   * across both tracks; a single track keeps that track's rows and ranks them by
+   * `track_rank_position`, i.e. the combined order restricted to the track.
+   */
+  trackView?: TrackView;
+  /** When given, the board renders the track switch in its header. */
+  onTrackViewChange?: (view: TrackView) => void;
 }
 
 // Text search filter component
@@ -118,6 +129,29 @@ function HeaderWithInfo({
  */
 const NO_RANKINGS: ModelRanking[] = [];
 
+/** Left-edge colour marking a row's track; transparent when the track is unknown. */
+function trackAccent(row: ModelRanking): string {
+  return isTrack(row.track) ? TRACK_STYLE[row.track].accent : 'border-l-transparent';
+}
+
+/** The rank this board shows for a row: combined, or within the track in a track view. */
+function displayedRank(row: ModelRanking, trackView: TrackView): number {
+  return trackView === 'all' ? row.rank_position : row.track_rank_position ?? row.rank_position;
+}
+
+function RankCell({ row, trackView }: { row: ModelRanking; trackView: TrackView }) {
+  return (
+    <div>
+      <span className="font-semibold text-gray-900">{displayedRank(row, trackView)}</span>
+      {trackView !== 'all' && (
+        <div className="text-xs text-gray-400" title="Rank on the combined board of both tracks">
+          #{row.rank_position} overall
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Tooltip body for the SQL column. Kept next to the header that uses it. */
 function SqlExplanation() {
   return (
@@ -137,6 +171,8 @@ export default function RankingTableElo({
   limit,
   definitionId,
   sqlEligibleModelIds,
+  trackView = 'all',
+  onTrackViewChange,
 }: RankingTableEloProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
@@ -149,16 +185,20 @@ export default function RankingTableElo({
   // down, after sorting and filtering, so both act on every model rather than on
   // the first ten. Memoized so the `data` reference is stable across renders — an
   // unstable one makes react-table's auto-reset loop infinitely (freezing the page).
-  const data = useMemo(() => (rankings?.length ? rankings : NO_RANKINGS), [rankings]);
+  // The track filter runs here, before react-table, so sorting, the column filters
+  // and the collapsed-row limit all act on the chosen track only.
+  const data = useMemo(() => {
+    const rows = filterByTrack(rankings?.length ? rankings : NO_RANKINGS, trackView);
+    return rows.length ? rows : NO_RANKINGS;
+  }, [rankings, trackView]);
 
   const fullColumns = useMemo<ColumnDef<ModelRanking>[]>(
     () => [
       {
-        accessorKey: 'rank_position',
+        id: 'rank_position',
+        accessorFn: (row) => displayedRank(row, trackView),
         header: 'Rank',
-        cell: (info) => (
-          <span className="font-semibold text-gray-900">{info.getValue() as number}</span>
-        ),
+        cell: (info) => <RankCell row={info.row.original} trackView={trackView} />,
       },
       {
         accessorKey: 'model_name',
@@ -166,6 +206,11 @@ export default function RankingTableElo({
         cell: (info) => (
           <span className="font-medium text-gray-900">{info.getValue() as string}</span>
         ),
+      },
+      {
+        accessorKey: 'track',
+        header: 'Track',
+        cell: (info) => <TrackBadge track={info.row.original.track} />,
       },
       {
         accessorKey: 'elo_rating_median',
@@ -293,17 +338,16 @@ export default function RankingTableElo({
         },
       },
     ],
-    [sqlEligibleModelIds]
+    [sqlEligibleModelIds, trackView]
   );
 
   const compactColumns = useMemo<ColumnDef<ModelRanking>[]>(
     () => [
       {
-        accessorKey: 'rank_position',
+        id: 'rank_position',
+        accessorFn: (row) => displayedRank(row, trackView),
         header: 'Rank',
-        cell: (info) => (
-          <span className="font-semibold text-gray-900">{info.getValue() as number}</span>
-        ),
+        cell: (info) => <RankCell row={info.row.original} trackView={trackView} />,
       },
       {
         accessorKey: 'model_name',
@@ -311,6 +355,11 @@ export default function RankingTableElo({
         cell: (info) => (
           <span className="font-medium text-gray-900">{info.getValue() as string}</span>
         ),
+      },
+      {
+        accessorKey: 'track',
+        header: 'Track',
+        cell: (info) => <TrackBadge track={info.row.original.track} />,
       },
       {
         accessorKey: 'elo_rating_median',
@@ -386,7 +435,7 @@ export default function RankingTableElo({
         },
       },
     ],
-    [sqlEligibleModelIds]
+    [sqlEligibleModelIds, trackView]
   );
 
   const columns = compact ? compactColumns : fullColumns;
@@ -419,10 +468,16 @@ export default function RankingTableElo({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {title && (
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          {definitionId ? (
+    // No overflow-hidden here: the track switch's info panel has to be able to
+    // extend past the card. The table scroller below clips on its own.
+    <div className="bg-white rounded-lg shadow-md">
+      {(title || onTrackViewChange) && (
+        <div
+          className={`flex flex-wrap items-center gap-3 rounded-t-lg border-b border-gray-200 bg-gray-50 ${
+            title ? 'px-6 py-4 justify-between' : 'px-4 py-2 justify-end'
+          }`}
+        >
+          {title && (definitionId ? (
             <h3 
               className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
               onClick={() => router.push(`/challenges/${definitionId}`)}
@@ -431,7 +486,8 @@ export default function RankingTableElo({
             </h3>
           ) : (
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          )}
+          ))}
+          {onTrackViewChange && <TrackSwitch value={trackView} onChange={onTrackViewChange} />}
         </div>
       )}
       {/* Card list: small screens only. The full table needs ~1200-1900px of
@@ -448,15 +504,21 @@ export default function RankingTableElo({
               key={row.id}
               type="button"
               onClick={() => handleRowClick(String(model.model_id), model.model_name)}
-              className="w-full text-left bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-3"
+              className={`w-full text-left bg-white border border-gray-200 border-l-4 ${trackAccent(model)} rounded-lg shadow-sm hover:shadow-md transition-shadow p-3`}
             >
               <div className="flex items-start gap-3">
                 <span className="inline-flex items-center justify-center shrink-0 w-7 h-7 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">
-                  {model.rank_position}
+                  {displayedRank(model, trackView)}
                 </span>
-                <span className="text-sm font-medium text-gray-900 break-words">
+                <span className="min-w-0 flex-1 text-sm font-medium text-gray-900 break-words">
                   {model.model_name}
+                  {trackView !== 'all' && (
+                    <span className="block text-xs font-normal text-gray-400">
+                      #{model.rank_position} overall
+                    </span>
+                  )}
                 </span>
+                <TrackBadge track={model.track} />
               </div>
 
               <div className="mt-3 space-y-1 text-sm">
@@ -505,7 +567,8 @@ export default function RankingTableElo({
         })}
       </div>
 
-      <div className="hidden md:block overflow-x-auto">
+      {/* Rounded itself, since the card no longer clips its children. */}
+      <div className={`hidden md:block overflow-x-auto ${title || onTrackViewChange ? 'rounded-b-lg' : 'rounded-lg'}`}>
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -549,10 +612,12 @@ export default function RankingTableElo({
                 className="hover:bg-gray-50 cursor-pointer transition-colors"
                 onClick={() => handleRowClick(String(row.original.model_id), row.original.model_name)}
               >
-                {row.getVisibleCells().map((cell) => (
+                {row.getVisibleCells().map((cell, cellIndex) => (
                   <td
                     key={cell.id}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                    className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 ${
+                      cellIndex === 0 ? `border-l-4 ${trackAccent(row.original)}` : ''
+                    }`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
@@ -565,12 +630,14 @@ export default function RankingTableElo({
 
       {allRows.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          No rankings found.
+          {trackView === 'all'
+            ? 'No rankings found.'
+            : `No ${TRACK_VIEW_LABEL[trackView]} models in this ranking.`}
         </div>
       )}
 
       {collapsible && (
-        <div className="border-t border-gray-200 bg-gray-50">
+        <div className="rounded-b-lg border-t border-gray-200 bg-gray-50">
           <button
             type="button"
             onClick={() => setExpanded((wasExpanded) => !wasExpanded)}

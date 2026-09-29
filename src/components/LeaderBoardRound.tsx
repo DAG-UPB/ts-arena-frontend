@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Clock } from 'lucide-react';
 import Pagination from './Pagination';
+import TrackBadge from './TrackBadge';
+import TrackSwitch from './TrackSwitch';
+import { TRACK_STYLE, TRACK_VIEW_LABEL, Track, TrackView, filterByTrack, isTrack } from '@/src/lib/tracks';
 
 export interface LeaderboardEntry {
   model_id: number;
@@ -26,7 +29,12 @@ export interface LeaderboardEntry {
    */
   has_quantiles: boolean | null;
   is_final: boolean;
+  /** Per-series MASE rank across both tracks. */
   rank: number;
+  /** Reference Track (implemented in ts-arena-models) or Open Track (everyone else). */
+  track?: Track;
+  /** Per-series MASE rank among the models of the same track. */
+  track_rank?: number;
 }
 
 interface SeriesResult {
@@ -40,6 +48,7 @@ interface ModelRow {
   model_id: number;
   readable_id: string;
   model_name: string;
+  track?: Track;
   seriesRanks: Record<number, SeriesResult>;
   avgRank: number;
   /** Mean SQL across the series this model was scored on, or null if none were. */
@@ -55,6 +64,14 @@ interface LeaderBoardRoundProps {
 export default function LeaderBoardRound({ leaderboard, loading, status }: LeaderBoardRoundProps) {
   const [leaderboardPage, setLeaderboardPage] = useState(1);
   const MODELS_PER_PAGE = 10;
+  // Both tracks with one rank per series by default; a track view keeps that
+  // track's rows and ranks each series among them (`track_rank`).
+  const [trackView, setTrackView] = useState<TrackView>('all');
+
+  const changeTrackView = (view: TrackView) => {
+    setTrackView(view);
+    setLeaderboardPage(1);
+  };
 
   // Horizontal-scroll affordance: the series matrix is wider than a phone
   // viewport, and nothing otherwise signals that it can be swiped. The hint
@@ -85,21 +102,31 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
       observer.disconnect();
       container.removeEventListener('scroll', update);
     };
-  }, [loading, leaderboard, leaderboardPage]);
+  }, [loading, leaderboard, leaderboardPage, trackView]);
+
+  const trackEntries = filterByTrack(leaderboard, trackView);
 
   return (
-    <div className="mb-8 bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900">
-          {status === 'active' ? 'Preliminary Round Leaderboard' : 'Round Leaderboard'}
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          {status === 'active' 
-            ? 'Preliminary rankings while the round is still active. Final rankings for this round will be available once the round is completed.'
-            : 'Model rankings per series based on MASE score'}
-        </p>
+    // No overflow-hidden on the card: the track switch's info panel has to be able
+    // to extend past it. The body below clips on its own.
+    <div className="mb-8 bg-white rounded-lg shadow-md">
+      <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 rounded-t-lg flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {status === 'active' ? 'Preliminary Round Leaderboard' : 'Round Leaderboard'}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            {status === 'active' 
+              ? 'Preliminary rankings while the round is still active. Final rankings for this round will be available once the round is completed.'
+              : 'Model rankings per series based on MASE score'}
+          </p>
+        </div>
+        {status !== 'registration' && leaderboard.length > 0 && (
+          <TrackSwitch value={trackView} onChange={changeTrackView} />
+        )}
       </div>
       
+      <div className="overflow-hidden rounded-b-lg">
       {status === 'registration' ? (
         <div className="px-6 py-12 text-center text-gray-500">
           <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" strokeWidth={1.5} />
@@ -110,6 +137,10 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
         <div className="px-6 py-12 text-center text-gray-500">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
           Loading leaderboard...
+        </div>
+      ) : leaderboard.length > 0 && trackEntries.length === 0 ? (
+        <div className="px-6 py-12 text-center text-gray-500">
+          No {TRACK_VIEW_LABEL[trackView]} models in this round
         </div>
       ) : leaderboard.length > 0 ? (
         (() => {
@@ -122,14 +153,16 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
             }
           });
           
-          // Group data by model
+          // Group data by model. Series columns above come from the whole board, so
+          // they stay put when the track changes; the rows come from the track view.
           const modelMap = new Map<number, ModelRow>();
-          leaderboard.forEach(entry => {
+          trackEntries.forEach(entry => {
             if (!modelMap.has(entry.model_id)) {
               modelMap.set(entry.model_id, {
                 model_id: entry.model_id,
                 readable_id: entry.readable_id,
                 model_name: entry.model_name,
+                track: entry.track,
                 seriesRanks: {},
                 avgRank: 0,
                 avgSql: null
@@ -137,7 +170,7 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
             }
             const model = modelMap.get(entry.model_id)!;
             model.seriesRanks[entry.series_id] = {
-              rank: entry.rank,
+              rank: trackView === 'all' ? entry.rank : entry.track_rank ?? entry.rank,
               mase: entry.mase,
               sql: entry.sql_score,
               hasQuantiles: entry.has_quantiles
@@ -201,14 +234,21 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
                   <tbody className="bg-white divide-y divide-gray-200">
                     {paginatedModels.map((model) => (
                       <tr key={model.model_id} className="group hover:bg-gray-50">
-                        <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-normal sm:whitespace-nowrap sticky left-0 bg-white group-hover:bg-gray-50 z-10 border-r border-gray-200 sm:border-r-0">
+                        <td
+                          className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-normal sm:whitespace-nowrap sticky left-0 bg-white group-hover:bg-gray-50 z-10 border-r border-gray-200 sm:border-r-0 border-l-4 ${
+                            isTrack(model.track) ? TRACK_STYLE[model.track].accent : 'border-l-transparent'
+                          }`}
+                        >
                           <div className="max-w-[9rem] sm:max-w-none">
-                            <Link
-                              href={`/models/${model.model_id}`}
-                              className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                            >
-                              {model.model_name}
-                            </Link>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                              <Link
+                                href={`/models/${model.model_id}`}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                              >
+                                {model.model_name}
+                              </Link>
+                              <TrackBadge track={model.track} />
+                            </div>
                             <p className="text-xs text-gray-500">{model.readable_id}</p>
                           </div>
                         </td>
@@ -308,6 +348,7 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
           No leaderboard data available for this round
         </div>
       )}
+      </div>
     </div>
   );
 }

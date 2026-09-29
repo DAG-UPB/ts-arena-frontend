@@ -1,3 +1,5 @@
+import type { Track } from '@/src/lib/tracks';
+
 export interface RankingFilters {
   definition_id?: number;
   frequency_horizon?: string;
@@ -50,6 +52,13 @@ export interface ModelRanking {
   // Present so bulk (scope_type) responses can be grouped by scope.
   scope_id?: string | null;
   definition_id?: number | null;
+  /** Reference Track (implemented in ts-arena-models) or Open Track (everyone else). */
+  track?: Track;
+  /**
+   * Position among the models of the same track in this scope. ELO is fitted over
+   * both tracks together, so this is `rank_position` restricted to the track.
+   */
+  track_rank_position?: number;
 }
 
 export interface RankingsResponse {
@@ -125,6 +134,7 @@ export interface ModelDetails {
   website_url?: string | null;
   description?: string | null;
   arxiv_id?: string | null;
+  track?: Track;
 }
 
 /**
@@ -143,6 +153,7 @@ export interface ModelListItem {
   repo_url?: string | null;
   website_url?: string | null;
   arxiv_id?: string | null;
+  track?: Track;
 }
 
 export interface ModelDetailRankings {

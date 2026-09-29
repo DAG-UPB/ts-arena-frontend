@@ -13,6 +13,7 @@ import ChallengeRoundsList from '@/src/components/ChallengeRoundsList';
 import type { ChallengeDefinition, DefinitionSeries } from '@/src/types/challenge';
 import { getFilteredRankings, getRankingFilters, collectSqlEligible, type RankingsResponse, type FilterOptions } from '@/src/services/modelService';
 import { getDefinitionSeries } from '@/src/services/definitionService';
+import { filterByTrack, type TrackView } from '@/src/lib/tracks';
 
 export default function ChallengeDefinitionDetail() {
   const params = useParams();
@@ -27,6 +28,7 @@ export default function ChallengeDefinitionDetail() {
   const [loading, setLoading] = useState(true);
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [rankingsPage, setRankingsPage] = useState(1);
+  const [trackView, setTrackView] = useState<TrackView>('all');
   const [error, setError] = useState<string | null>(null);
   const [series, setSeries] = useState<DefinitionSeries[]>([]);
   const [seriesLoading, setSeriesLoading] = useState(false);
@@ -129,10 +131,10 @@ export default function ChallengeDefinitionDetail() {
     fetchRankings();
   }, [definition, selectedCalculationDate, filterOptions]);
 
-  // Reset to page 1 when calculation date changes
+  // Reset to page 1 when calculation date or track changes
   useEffect(() => {
     setRankingsPage(1);
-  }, [selectedCalculationDate]);
+  }, [selectedCalculationDate, trackView]);
 
   // Fetch the series that belong to this challenge definition
   useEffect(() => {
@@ -153,11 +155,13 @@ export default function ChallengeDefinitionDetail() {
 
   // Rankings pagination calculations
   const RANKINGS_PER_PAGE = 10;
-  const totalRankings = rankings?.rankings.length || 0;
+  // Filtered before paginating, so a track view pages through that track only.
+  const trackRankings = filterByTrack(rankings?.rankings || [], trackView);
+  const totalRankings = trackRankings.length;
   const totalRankingsPages = Math.ceil(totalRankings / RANKINGS_PER_PAGE);
   const startRankingIndex = (rankingsPage - 1) * RANKINGS_PER_PAGE;
   const endRankingIndex = startRankingIndex + RANKINGS_PER_PAGE;
-  const paginatedRankings = rankings?.rankings.slice(startRankingIndex, endRankingIndex) || [];
+  const paginatedRankings = trackRankings.slice(startRankingIndex, endRankingIndex);
 
   if (loading) {
     return (
@@ -316,9 +320,15 @@ export default function ChallengeDefinitionDetail() {
             </div>
           ) : rankings && rankings.rankings.length > 0 ? (
             <>
-              <RankingTableElo rankings={paginatedRankings} sqlEligibleModelIds={sqlEligible} />
+              <RankingTableElo
+                rankings={paginatedRankings}
+                sqlEligibleModelIds={sqlEligible}
+                trackView={trackView}
+                onTrackViewChange={setTrackView}
+              />
               
               {/* Rankings Pagination */}
+              {totalRankings > 0 && (
               <div className="mt-4 bg-white rounded-lg shadow-md overflow-hidden">
                 <Pagination
                   currentPage={rankingsPage}
@@ -329,6 +339,7 @@ export default function ChallengeDefinitionDetail() {
                   itemLabel="models"
                 />
               </div>
+              )}
             </>
           ) : (
             <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
