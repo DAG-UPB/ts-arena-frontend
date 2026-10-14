@@ -38,10 +38,13 @@ export interface ArenaScoreRow {
   score: number | null;
   ci_lower: number | null;
   ci_upper: number | null;
+  /** Place by score among the ranked models. Null unless the model is ranked. */
+  rank: number | null;
   /** Rank range the confidence intervals allow. Null unless the model is ranked. */
   rank_best: number | null;
   rank_worst: number | null;
-  /** The same range among the models of the row's own track. */
+  /** The same place and range among the models of the row's own track. */
+  track_rank: number | null;
   track_rank_best: number | null;
   track_rank_worst: number | null;
   provisional: boolean;
@@ -87,6 +90,7 @@ export interface ArenaScoreDaily {
   score: number | null;
   ci_lower: number | null;
   ci_upper: number | null;
+  rank: number | null;
   rank_best: number | null;
   rank_worst: number | null;
   provisional: boolean;

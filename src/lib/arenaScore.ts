@@ -26,6 +26,13 @@ export function formatRankRange(best: number, worst: number): string {
   return best === worst ? String(best) : `${best}–${worst}`;
 }
 
+/** Place with its range in one line, e.g. "2 (1–6)"; just the number when the range is a single place. */
+export function formatRank(bounds: RankBounds): string {
+  const range = formatRankRange(bounds.best, bounds.worst);
+  if (bounds.place === null || bounds.best === bounds.worst) return range;
+  return `${bounds.place} (${range})`;
+}
+
 /** Rows a table shows: scored models, and in the global table only those with enough coverage. */
 export function isListed(row: ArenaScoreRow): boolean {
   if (row.score === null) return false;
@@ -38,8 +45,10 @@ interface RankInput {
   unranked_disconnected: boolean;
   coverage: number | null;
   weeks_played: number;
+  rank?: number | null;
   rank_best: number | null;
   rank_worst: number | null;
+  track_rank?: number | null;
   track_rank_best?: number | null;
   track_rank_worst?: number | null;
   provisional_weeks?: number | null;
@@ -47,30 +56,39 @@ interface RankInput {
 }
 
 export interface RankBounds {
+  /** Place by score; null when the response does not carry it. */
+  place: number | null;
   best: number;
   worst: number;
 }
 
-/** The rank range to show, or null while the model has none. A track view uses the in-track range. */
+/** The place and rank range to show, or null while the model has none. A track view uses the in-track ones. */
 export function rankBounds(entry: RankInput, trackView: TrackView = 'all'): RankBounds | null {
   if (entry.provisional || entry.low_coverage || entry.unranked_disconnected) return null;
   // Entries without track ranges (the per-model history) fall back to the combined range.
   const inTrack = trackView !== 'all' && entry.track_rank_best !== undefined;
+  const place = inTrack ? entry.track_rank : entry.rank;
   const best = inTrack ? entry.track_rank_best : entry.rank_best;
   const worst = inTrack ? entry.track_rank_worst : entry.rank_worst;
-  return best == null || worst == null ? null : { best, worst };
+  return best == null || worst == null ? null : { place: place ?? null, best, worst };
 }
 
 export interface RankDisplay {
   text: string;
   title: string;
-  /** True when `text` is a rank range rather than a status. */
+  /** True when `text` is a rank rather than a status. */
   ranked: boolean;
+  /** Place and range of a ranked model. */
+  bounds: RankBounds | null;
 }
 
-const RANGE_MEANING =
-  "The model's place cannot be pinned down more closely than this range on the data so far. " +
-  'Models with overlapping 95 % confidence intervals cannot be separated yet.';
+function rankMeaning(bounds: RankBounds): string {
+  const place = bounds.place === null ? '' : `Place ${bounds.place} by Arena Score. `;
+  if (bounds.best === bounds.worst) {
+    return `${place}The 95 % confidence intervals separate this model from the models above and below it.`;
+  }
+  return `${place}The 95 % confidence intervals allow places ${bounds.best} to ${bounds.worst}: models whose intervals overlap cannot be separated yet.`;
+}
 
 /** What the rank cell shows: the range, or the reason there is none. */
 export function describeRank(entry: RankInput, trackView: TrackView = 'all'): RankDisplay {
@@ -80,6 +98,7 @@ export function describeRank(entry: RankInput, trackView: TrackView = 'all'): Ra
       title:
         'This model has no comparison with the main group of models in this ranking yet, so it has no score and no rank.',
       ranked: false,
+      bounds: null,
     };
   }
 
@@ -89,6 +108,7 @@ export function describeRank(entry: RankInput, trackView: TrackView = 'all'): Ra
       text: `provisional · ${entry.weeks_played} of ${weeks} weeks`,
       title: `Fewer than ${weeks} weeks of results so far. Score and interval are shown; the rank follows once ${weeks} weeks are in.`,
       ranked: false,
+      bounds: null,
     };
   }
 
@@ -99,6 +119,7 @@ export function describeRank(entry: RankInput, trackView: TrackView = 'all'): Ra
         text: `coverage ${formatPercent(entry.coverage)} (needs ${formatPercent(tau)})`,
         title: `Since it joined, this model has forecast ${formatPercent(entry.coverage)} of the tasks in its least covered challenge. A rank needs ${formatPercent(tau)} in every challenge.`,
         ranked: false,
+        bounds: null,
       };
     }
     return {
@@ -106,18 +127,20 @@ export function describeRank(entry: RankInput, trackView: TrackView = 'all'): Ra
       title:
         'Since this model joined, not every challenge of this ranking has had a round yet. It gets a rank once they all have.',
       ranked: false,
+      bounds: null,
     };
   }
 
   const bounds = rankBounds(entry, trackView);
-  if (!bounds) return { text: '–', title: 'No rank.', ranked: false };
+  if (!bounds) return { text: '–', title: 'No rank.', ranked: false, bounds: null };
   return {
-    text: formatRankRange(bounds.best, bounds.worst),
+    text: formatRank(bounds),
     title:
       trackView === 'all'
-        ? RANGE_MEANING
-        : `Rank among ${TRACK_VIEW_LABEL[trackView]} models. ${RANGE_MEANING}`,
+        ? rankMeaning(bounds)
+        : `Rank among ${TRACK_VIEW_LABEL[trackView]} models. ${rankMeaning(bounds)}`,
     ranked: true,
+    bounds,
   };
 }
 
