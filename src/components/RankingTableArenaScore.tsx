@@ -130,7 +130,7 @@ function RankCell({ row, trackView }: { row: ArenaScoreRow; trackView: TrackView
         </WithReason>
       )}
       {rank.ranked && trackView !== 'all' && (
-        <div className="text-xs text-gray-400" title="Rank range on the combined board of both tracks">
+        <div className="text-xs text-gray-400" title="Place and rank range on the combined board of both tracks">
           {describeRank(row, 'all').text} overall
         </div>
       )}

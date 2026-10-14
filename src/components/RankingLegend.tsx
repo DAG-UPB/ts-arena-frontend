@@ -2,8 +2,9 @@
 export default function RankingLegend() {
   return (
     <>
-      Arena Score: higher is better, with its 95 % confidence interval. The rank is a range: a
-      model&apos;s place cannot be pinned down more closely than that on the data so far. MASE
+      Arena Score: higher is better, with its 95 % confidence interval. The rank is the place by
+      Arena Score; below it, the range of places the intervals allow: the place cannot be pinned
+      down more closely than that on the data so far. MASE
       and SQL cover the last 30 days: lower is better.
     </>
   );

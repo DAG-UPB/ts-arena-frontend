@@ -157,7 +157,7 @@ export default function AboutPage() {
             </div>
             <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
               <div className="font-semibold text-gray-800 text-sm mb-1">Arena Score</div>
-              <p className="text-xs text-gray-600">Compares models series by series on the ratio of their errors, with a 95 % confidence interval. The rank is shown as a range.</p>
+              <p className="text-xs text-gray-600">Compares models series by series on the ratio of their errors, with a 95 % confidence interval. The rank is the place by score, shown with the range of places the intervals allow.</p>
             </div>
           </div>
         </div>
