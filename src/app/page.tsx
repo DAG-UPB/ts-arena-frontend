@@ -4,12 +4,22 @@ import { useState, useEffect, useRef } from 'react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
-import RankingTableElo from '@/src/components/RankingTableElo';
+import RankingTableArenaScore from '@/src/components/RankingTableArenaScore';
+import RankingLegend from '@/src/components/RankingLegend';
 import CancelledRoundsNotice, { CancelledRoundsBanner } from '@/src/components/CancelledRoundsNotice';
 import SectionNav, { NavSection } from '@/src/components/SectionNav';
 import TimeSeriesChart from '@/src/components/TimeSeriesChart';
-import { getFilteredRankings, getRankingFilters, collectSqlEligible, ModelRanking, FilterOptions, ChallengeDefinition } from '@/src/services/modelService';
+import {
+  getArenaScores,
+  getArenaScoreFilters,
+  ArenaScoreFilters,
+  ArenaScoreRow,
+  ChallengeDefinition,
+  FilterOptions,
+  ScoreMetric,
+} from '@/src/services/modelService';
 import { getDefinitionRounds } from '@/src/services/definitionService';
+import type { DefinitionRound } from '@/src/types/challenge';
 import type { TrackView } from '@/src/lib/tracks';
 
 const DEFINITION_ID:number = parseInt(process.env.NEXT_PUBLIC_DEFINITION_ID || '225');
@@ -42,25 +52,26 @@ function RankingPlaceholder() {
   );
 }
 
-interface RankingsData {
-  overall: ModelRanking[];
-  byDefinition: Record<number, ModelRanking[]>;
-  byFrequencyHorizon: Record<string, ModelRanking[]>;
-  /**
-   * Who may show an SQL number, per scope. Eligibility is scope-local: a model can
-   * forecast probabilistically in one challenge and point-only in another, so each
-   * table gets the set for its own scope rather than a single global one.
-   */
-  sqlEligible: {
-    overall: Set<number>;
-    byDefinition: Record<number, Set<number>>;
-    byFrequencyHorizon: Record<string, Set<number>>;
-  };
+/** Stands in for a board whose rankings could not be loaded. */
+function RankingUnavailable() {
+  return (
+    <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+      The ranking could not be loaded right now. Please try again later.
+    </div>
+  );
 }
 
-/** Group a bulk (scope_type) rankings response by definition id. */
-function groupByDefinition(rankings: ModelRanking[]): Record<number, ModelRanking[]> {
-  const grouped: Record<number, ModelRanking[]> = {};
+interface Boards {
+  overall: ArenaScoreRow[];
+  byDefinition: Record<number, ArenaScoreRow[]>;
+  byFrequencyHorizon: Record<string, ArenaScoreRow[]>;
+}
+
+const NO_BOARDS: Boards = { overall: [], byDefinition: {}, byFrequencyHorizon: {} };
+
+/** Group a bulk (scope_type) response by definition id. */
+function groupByDefinition(rankings: ArenaScoreRow[]): Record<number, ArenaScoreRow[]> {
+  const grouped: Record<number, ArenaScoreRow[]> = {};
   rankings.forEach((r) => {
     const id = r.definition_id ?? (r.scope_id != null ? Number(r.scope_id) : undefined);
     if (id === undefined || Number.isNaN(id)) return;
@@ -69,9 +80,9 @@ function groupByDefinition(rankings: ModelRanking[]): Record<number, ModelRankin
   return grouped;
 }
 
-/** Group a bulk (scope_type) rankings response by frequency/horizon scope id. */
-function groupByFrequencyHorizon(rankings: ModelRanking[]): Record<string, ModelRanking[]> {
-  const grouped: Record<string, ModelRanking[]> = {};
+/** Group a bulk (scope_type) response by frequency/horizon scope id. */
+function groupByFrequencyHorizon(rankings: ArenaScoreRow[]): Record<string, ArenaScoreRow[]> {
+  const grouped: Record<string, ArenaScoreRow[]> = {};
   rankings.forEach((r) => {
     if (r.scope_id == null) return;
     (grouped[r.scope_id] ??= []).push(r);
@@ -79,14 +90,39 @@ function groupByFrequencyHorizon(rankings: ModelRanking[]): Record<string, Model
   return grouped;
 }
 
-function eligibleSets<K extends string | number>(
-  grouped: Record<K, ModelRanking[]>
-): Record<K, Set<number>> {
-  const sets = {} as Record<K, Set<number>>;
-  (Object.keys(grouped) as K[]).forEach((key) => {
-    sets[key] = collectSqlEligible(grouped[key]);
+/**
+ * The three boards of the page for one Arena Score. The known scopes are seeded
+ * first, so a scope without rankings still renders as empty.
+ */
+async function loadBoards(
+  metric: ScoreMetric,
+  filters: ArenaScoreFilters,
+  options: FilterOptions
+): Promise<Boards> {
+  // One bulk request per scope type, not one per definition or frequency/horizon.
+  const [overall, definitions, frequencyHorizons] = await Promise.all([
+    getArenaScores({ ...filters, metric }),
+    getArenaScores({ ...filters, metric, scope_type: 'definition' }),
+    getArenaScores({ ...filters, metric, scope_type: 'frequency_horizon' }),
+  ]);
+
+  const byDefinition: Record<number, ArenaScoreRow[]> = {};
+  options.definitions.forEach((def: ChallengeDefinition) => {
+    byDefinition[def.id] = [];
   });
-  return sets;
+  Object.entries(groupByDefinition(definitions.rankings)).forEach(([id, rows]) => {
+    (byDefinition[Number(id)] ??= []).push(...rows);
+  });
+
+  const byFrequencyHorizon: Record<string, ArenaScoreRow[]> = {};
+  options.frequency_horizons.forEach((fh: string) => {
+    byFrequencyHorizon[fh] = [];
+  });
+  Object.entries(groupByFrequencyHorizon(frequencyHorizons.rankings)).forEach(([fh, rows]) => {
+    (byFrequencyHorizon[fh] ??= []).push(...rows);
+  });
+
+  return { overall: overall.rankings, byDefinition, byFrequencyHorizon };
 }
 
 export default function Home() {
@@ -95,12 +131,11 @@ export default function Home() {
     frequency_horizons: [],
     calculation_dates: [],
   });
-  const [rankingsData, setRankingsData] = useState<RankingsData>({
-    overall: [],
-    byDefinition: {},
-    byFrequencyHorizon: {},
-    sqlEligible: { overall: new Set(), byDefinition: {}, byFrequencyHorizon: {} },
+  const [boards, setBoards] = useState<Record<ScoreMetric, Boards>>({
+    point: NO_BOARDS,
+    probabilistic: NO_BOARDS,
   });
+  const [loadFailed, setLoadFailed] = useState(false);
   const [selectedCalculationDate, setSelectedCalculationDate] = useState<string>('');
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<number | null>(null);
   const [selectedFrequency, setSelectedFrequency] = useState<string | null>(null);
@@ -112,17 +147,19 @@ export default function Home() {
    * are showing. Client-side only — the rankings already carry each row's track.
    */
   const [trackView, setTrackView] = useState<TrackView>('all');
+  // Point or probabilistic Arena Score, shared by every board; both are fetched up front.
+  const [metric, setMetric] = useState<ScoreMetric>('point');
   /**
    * The filter options, cached across the two passes of `fetchAllData`. The
    * effect runs once to learn the default calculation date and once to fetch
    * the rankings for it; without this the second pass would re-request an
-   * identical `ranking-filters` response and hold the six rankings calls
+   * identical `arena-score-filters` response and hold the six rankings calls
    * behind it. A ref, not state — this is a cache, and writing it must not
    * re-trigger the effect that fills it.
    */
   const filterOptionsRef = useRef<FilterOptions | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const [oldestActiveRound, setOldestActiveRound] = useState<any>(null);
+  const [oldestActiveRound, setOldestActiveRound] = useState<DefinitionRound | null>(null);
   const [roundLoading, setRoundLoading] = useState(true);
 
   // Format calculation date for display
@@ -236,11 +273,12 @@ export default function Home() {
       let settled = true;
       try {
         setLoading(true);
+        setLoadFailed(false);
 
-        // First fetch filter options. getRankingFilters throws on a non-OK
+        // First fetch filter options. getArenaScoreFilters throws on a non-OK
         // response or an unexpected shape, so nothing invalid reaches state —
         // the render path reads these arrays unguarded.
-        const options = filterOptionsRef.current ?? await getRankingFilters();
+        const options = filterOptionsRef.current ?? await getArenaScoreFilters();
         filterOptionsRef.current = options;
         setFilterOptions(options);
 
@@ -255,7 +293,7 @@ export default function Home() {
         }
         
         // Build base filters
-        const baseFilters: any = { limit: 100 };
+        const baseFilters: ArenaScoreFilters = {};
         // Only send calculation_date if it's a month-end date (not Recent)
         if (selectedCalculationDate) {
           const selectedDateInfo = options.calculation_dates.find(
@@ -265,64 +303,16 @@ export default function Home() {
             baseFilters.calculation_date = selectedCalculationDate;
           }
         }
-        
-        // Six requests total: the three MASE boards this page ranks by, and the
-        // matching SQL boards, which are read only for their membership — they say
-        // which models actually forecast probabilistically in each scope.
-        // This page used to issue one request per definition and per
-        // frequency/horizon — with 16 definitions that was ~20 parallel calls,
-        // each of which costs the API a full scan of the rankings view.
-        const sqlFilters = { ...baseFilters, metric: 'sql' as const };
-        const [
-          overallResponse,
-          definitionResponse,
-          frequencyHorizonResponse,
-          overallSql,
-          definitionSql,
-          frequencyHorizonSql,
-        ] = await Promise.all([
-          getFilteredRankings(baseFilters),
-          getFilteredRankings({ ...baseFilters, scope_type: 'definition' }),
-          getFilteredRankings({ ...baseFilters, scope_type: 'frequency_horizon' }),
-          getFilteredRankings(sqlFilters),
-          getFilteredRankings({ ...sqlFilters, scope_type: 'definition' }),
-          getFilteredRankings({ ...sqlFilters, scope_type: 'frequency_horizon' }),
+
+        // Six requests total: the three boards of each Arena Score.
+        const [point, probabilistic] = await Promise.all([
+          loadBoards('point', baseFilters, options),
+          loadBoards('probabilistic', baseFilters, options),
         ]);
-
-        // Bulk responses arrive as one flat list; group them by scope. Seed the
-        // known scopes first so a scope with no rankings still renders as empty.
-        const byDefinition: Record<number, ModelRanking[]> = {};
-        options.definitions.forEach((def: ChallengeDefinition) => {
-          byDefinition[def.id] = [];
-        });
-        Object.entries(groupByDefinition(definitionResponse.rankings)).forEach(([id, rows]) => {
-          (byDefinition[Number(id)] ??= []).push(...rows);
-        });
-
-        const byFrequencyHorizon: Record<string, ModelRanking[]> = {};
-        options.frequency_horizons.forEach((fh: string) => {
-          byFrequencyHorizon[fh] = [];
-        });
-        Object.entries(groupByFrequencyHorizon(frequencyHorizonResponse.rankings)).forEach(
-          ([fh, rows]) => {
-            (byFrequencyHorizon[fh] ??= []).push(...rows);
-          }
-        );
-
-        setRankingsData({
-          overall: overallResponse.rankings,
-          byDefinition,
-          byFrequencyHorizon,
-          sqlEligible: {
-            overall: collectSqlEligible(overallSql.rankings),
-            byDefinition: eligibleSets(groupByDefinition(definitionSql.rankings)),
-            byFrequencyHorizon: eligibleSets(
-              groupByFrequencyHorizon(frequencyHorizonSql.rankings)
-            ),
-          },
-        });
+        setBoards({ point, probabilistic });
       } catch (error) {
         console.error('Error fetching rankings:', error);
+        setLoadFailed(true);
       } finally {
         if (settled) setLoading(false);
       }
@@ -330,6 +320,8 @@ export default function Home() {
 
     fetchAllData();
   }, [selectedCalculationDate, isMounted]);
+
+  const board = boards[metric];
 
   // `loading` covers the rankings only, and is applied to the boards inside the
   // ranking sections rather than to the whole page. Returning a different tree
@@ -441,9 +433,8 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-sm text-gray-600 mb-2">
-                Aggregated scores across all challenge definitions and time series. ELO: higher is
-                better. MASE and SQL: lower is better. SQL is shown only for models that submit
-                quantile forecasts. Updated multiple times a day.
+                Aggregated scores across all challenge definitions and time series.{' '}
+                <RankingLegend /> Updated multiple times a day.
               </p>
               <p className="text-sm text-gray-600 mb-4">
                 Models compete in two tracks, shown together by default.{' '}
@@ -455,13 +446,16 @@ export default function Home() {
               </p>
               {loading ? (
                 <RankingPlaceholder />
+              ) : loadFailed ? (
+                <RankingUnavailable />
               ) : (
-                <RankingTableElo
-                  rankings={rankingsData.overall}
-                  sqlEligibleModelIds={rankingsData.sqlEligible.overall}
+                <RankingTableArenaScore
+                  rankings={board.overall}
                   limit={COLLAPSED_ROWS}
                   trackView={trackView}
                   onTrackViewChange={setTrackView}
+                  metric={metric}
+                  onMetricChange={setMetric}
                 />
               )}
             </section>
@@ -488,18 +482,21 @@ export default function Home() {
               </p>
               {loading ? (
                 <RankingPlaceholder />
+              ) : loadFailed ? (
+                <RankingUnavailable />
               ) : selectedDefinition ? (
                 <>
                 <CancelledRoundsNotice definitionId={selectedDefinition.id} />
-                <RankingTableElo
+                <RankingTableArenaScore
                   key={selectedDefinition.id}
-                  rankings={rankingsData.byDefinition[selectedDefinition.id] || []}
-                  sqlEligibleModelIds={rankingsData.sqlEligible.byDefinition[selectedDefinition.id]}
+                  rankings={board.byDefinition[selectedDefinition.id] || []}
                   limit={COLLAPSED_ROWS}
                   title={selectedDefinition.name}
                   definitionId={selectedDefinition.id}
                   trackView={trackView}
                   onTrackViewChange={setTrackView}
+                  metric={metric}
+                  onMetricChange={setMetric}
                 />
                 </>
               ) : (
@@ -549,15 +546,18 @@ export default function Home() {
               </p>
               {loading ? (
                 <RankingPlaceholder />
+              ) : loadFailed ? (
+                <RankingUnavailable />
               ) : selectedFh ? (
-                <RankingTableElo
+                <RankingTableArenaScore
                   key={selectedFh}
-                  rankings={rankingsData.byFrequencyHorizon[selectedFh] || []}
-                  sqlEligibleModelIds={rankingsData.sqlEligible.byFrequencyHorizon[selectedFh]}
+                  rankings={board.byFrequencyHorizon[selectedFh] || []}
                   limit={COLLAPSED_ROWS}
                   title={formatFrequencyHorizon(selectedFh)}
                   trackView={trackView}
                   onTrackViewChange={setTrackView}
+                  metric={metric}
+                  onMetricChange={setMetric}
                 />
               ) : (
                 <p className="text-sm text-gray-500">No frequency / horizon combinations available.</p>

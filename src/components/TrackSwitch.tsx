@@ -45,8 +45,8 @@ export function TrackExplanation() {
         with any method and any additional data. Shows the best achievable forecast.
       </p>
       <p>
-        ELO is computed over both tracks together. A single-track view shows the same ranking,
-        restricted to that track.
+        The Arena Score is computed over both tracks together. A single-track view shows the same
+        scores, with ranks counted among that track&apos;s models.
       </p>
     </div>
   );

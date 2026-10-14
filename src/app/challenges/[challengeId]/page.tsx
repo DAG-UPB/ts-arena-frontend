@@ -1,34 +1,43 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Info } from 'lucide-react';
 import Breadcrumbs from '@/src/components/Breadcrumbs';
-import RankingTableElo from '@/src/components/RankingTableElo';
+import RankingTableArenaScore from '@/src/components/RankingTableArenaScore';
+import RankingLegend from '@/src/components/RankingLegend';
 import CancelledRoundsNotice from '@/src/components/CancelledRoundsNotice';
 import Pagination from '@/src/components/Pagination';
 import DetailsCard from '@/src/components/DetailsCard';
 import ChallengeRoundsList from '@/src/components/ChallengeRoundsList';
 import type { ChallengeDefinition, DefinitionSeries } from '@/src/types/challenge';
-import { getFilteredRankings, getRankingFilters, collectSqlEligible, type RankingsResponse, type FilterOptions } from '@/src/services/modelService';
+import {
+  getArenaScores,
+  getArenaScoreFilters,
+  type ArenaScoreFilters,
+  type ArenaScoreRow,
+  type FilterOptions,
+  type ScoreMetric,
+} from '@/src/services/modelService';
 import { getDefinitionSeries } from '@/src/services/definitionService';
+import { isListed } from '@/src/lib/arenaScore';
 import { filterByTrack, type TrackView } from '@/src/lib/tracks';
 
 export default function ChallengeDefinitionDetail() {
   const params = useParams();
   const router = useRouter();
   const [definition, setDefinition] = useState<ChallengeDefinition | null>(null);
-  const [rankings, setRankings] = useState<RankingsResponse | null>(null);
-  // Models scored on this challenge's SQL board — the ones that submitted real
-  // quantiles here. Everyone else shows a dash rather than a degenerate score.
-  const [sqlEligible, setSqlEligible] = useState<Set<number> | undefined>(undefined);
+  // Both Arena Scores of this challenge; the switch picks one without a new request.
+  const [rankings, setRankings] = useState<Record<ScoreMetric, ArenaScoreRow[]> | null>(null);
+  const [rankingsFailed, setRankingsFailed] = useState(false);
   const [selectedCalculationDate, setSelectedCalculationDate] = useState<string>('');
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [rankingsPage, setRankingsPage] = useState(1);
   const [trackView, setTrackView] = useState<TrackView>('all');
+  const [metric, setMetric] = useState<ScoreMetric>('point');
   const [error, setError] = useState<string | null>(null);
   const [series, setSeries] = useState<DefinitionSeries[]>([]);
   const [seriesLoading, setSeriesLoading] = useState(false);
@@ -65,7 +74,7 @@ export default function ChallengeDefinitionDetail() {
           setDefinition(found);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError('The challenge could not be loaded right now.');
         console.error('Error fetching challenge definition:', err);
       } finally {
         setLoading(false);
@@ -81,11 +90,13 @@ export default function ChallengeDefinitionDetail() {
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const options = await getRankingFilters();
+        const options = await getArenaScoreFilters();
         setFilterOptions(options);
         // Set default calculation date to the first (most recent) one
-        if (!selectedCalculationDate && options.calculation_dates.length > 0) {
-          setSelectedCalculationDate(options.calculation_dates[0].calculation_date);
+        if (options.calculation_dates.length > 0) {
+          setSelectedCalculationDate(
+            (current) => current || options.calculation_dates[0].calculation_date
+          );
         }
       } catch (err) {
         console.error('Error fetching filter options:', err);
@@ -102,10 +113,8 @@ export default function ChallengeDefinitionDetail() {
 
       try {
         setRankingsLoading(true);
-        const filters: any = { 
-          definition_id: definition.id,
-          limit: 100
-        };
+        setRankingsFailed(false);
+        const filters: ArenaScoreFilters = { definition_id: definition.id };
         // Only send calculation_date if it's a month-end date (not Recent)
         if (selectedCalculationDate && filterOptions) {
           const selectedDateInfo = filterOptions.calculation_dates.find(
@@ -115,14 +124,14 @@ export default function ChallengeDefinitionDetail() {
             filters.calculation_date = selectedCalculationDate;
           }
         }
-        const [rankingsData, sqlRankings] = await Promise.all([
-          getFilteredRankings(filters),
-          getFilteredRankings({ ...filters, metric: 'sql' }),
+        const [point, probabilistic] = await Promise.all([
+          getArenaScores({ ...filters, metric: 'point' }),
+          getArenaScores({ ...filters, metric: 'probabilistic' }),
         ]);
-        setRankings(rankingsData);
-        setSqlEligible(collectSqlEligible(sqlRankings.rankings));
+        setRankings({ point: point.rankings, probabilistic: probabilistic.rankings });
       } catch (err) {
         console.error('Error fetching rankings:', err);
+        setRankingsFailed(true);
       } finally {
         setRankingsLoading(false);
       }
@@ -131,10 +140,10 @@ export default function ChallengeDefinitionDetail() {
     fetchRankings();
   }, [definition, selectedCalculationDate, filterOptions]);
 
-  // Reset to page 1 when calculation date or track changes
+  // Reset to page 1 when calculation date, track or Arena Score changes
   useEffect(() => {
     setRankingsPage(1);
-  }, [selectedCalculationDate, trackView]);
+  }, [selectedCalculationDate, trackView, metric]);
 
   // Fetch the series that belong to this challenge definition
   useEffect(() => {
@@ -155,8 +164,9 @@ export default function ChallengeDefinitionDetail() {
 
   // Rankings pagination calculations
   const RANKINGS_PER_PAGE = 10;
-  // Filtered before paginating, so a track view pages through that track only.
-  const trackRankings = filterByTrack(rankings?.rankings || [], trackView);
+  // Filtered before paginating, so a page never comes up short of hidden rows and
+  // a track view pages through that track only.
+  const trackRankings = filterByTrack((rankings?.[metric] ?? []).filter(isListed), trackView);
   const totalRankings = trackRankings.length;
   const totalRankingsPages = Math.ceil(totalRankings / RANKINGS_PER_PAGE);
   const startRankingIndex = (rankingsPage - 1) * RANKINGS_PER_PAGE;
@@ -311,22 +321,31 @@ export default function ChallengeDefinitionDetail() {
               </select>
             </div>
           </div>
-          
+
+          <p className="text-sm text-gray-600 mb-4">
+            <RankingLegend />
+          </p>
+
           <CancelledRoundsNotice definitionId={definition.id} />
 
           {rankingsLoading ? (
             <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
               Loading rankings...
             </div>
-          ) : rankings && rankings.rankings.length > 0 ? (
+          ) : rankingsFailed ? (
+            <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
+              The rankings could not be loaded right now. Please try again later.
+            </div>
+          ) : rankings && (rankings.point.length > 0 || rankings.probabilistic.length > 0) ? (
             <>
-              <RankingTableElo
+              <RankingTableArenaScore
                 rankings={paginatedRankings}
-                sqlEligibleModelIds={sqlEligible}
                 trackView={trackView}
                 onTrackViewChange={setTrackView}
+                metric={metric}
+                onMetricChange={setMetric}
               />
-              
+
               {/* Rankings Pagination */}
               {totalRankings > 0 && (
               <div className="mt-4 bg-white rounded-lg shadow-md overflow-hidden">
