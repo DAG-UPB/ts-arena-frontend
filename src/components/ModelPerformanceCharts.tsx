@@ -7,7 +7,8 @@ import type { PlotParams } from 'react-plotly.js';
 import type { ArenaScoreScopeHistory } from '@/src/services/modelService';
 import { useIsMobile } from '@/src/hooks/useIsMobile';
 import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
-import { describeRank, formatScore } from '@/src/lib/arenaScore';
+import WithReason from '@/src/components/WithReason';
+import { describeRank, formatInterval, formatScore } from '@/src/lib/arenaScore';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 // Dynamically import Plotly to avoid SSR issues. `PlotlyPlot` is the app's
@@ -318,12 +319,12 @@ export default function ModelPerformanceCharts({ scopes }: ModelPerformanceChart
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                   <div className="bg-gray-50 p-3 rounded">
                     <div className="text-gray-500 text-xs">Current Rank</div>
-                    <div
-                      className={latestRank.ranked ? 'text-lg font-semibold text-gray-900' : 'text-sm text-gray-700'}
-                      title={latestRank.title}
+                    <WithReason
+                      reason={latestRank.title}
+                      className={latestRank.ranked ? 'block text-lg font-semibold text-gray-900' : 'block text-sm text-gray-700'}
                     >
                       {latestRank.text}
-                    </div>
+                    </WithReason>
                   </div>
                   <div className="bg-gray-50 p-3 rounded">
                     <div className="text-gray-500 text-xs">Current Arena Score</div>
@@ -334,9 +335,7 @@ export default function ModelPerformanceCharts({ scopes }: ModelPerformanceChart
                   <div className="bg-gray-50 p-3 rounded">
                     <div className="text-gray-500 text-xs">95 % CI</div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {latest.ci_lower === null || latest.ci_upper === null
-                        ? '–'
-                        : `[${latest.ci_lower.toFixed(0)}, ${latest.ci_upper.toFixed(0)}]`}
+                      {formatInterval(latest.ci_lower, latest.ci_upper) ?? '–'}
                     </div>
                   </div>
                 </div>

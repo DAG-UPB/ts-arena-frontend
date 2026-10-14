@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -13,7 +12,7 @@ import {
   flexRender,
   SortDirection,
 } from '@tanstack/react-table';
-import { ChevronDown, Info } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import type { ArenaScoreRow, ScoreMetric } from '@/src/services/modelService';
 import {
   MaseExplanation,
@@ -21,9 +20,11 @@ import {
   ScoreExplanation,
   SqlExplanation,
 } from '@/src/components/ColumnExplanations';
+import LabelWithInfo from '@/src/components/LabelWithInfo';
 import MetricSwitch from '@/src/components/MetricSwitch';
 import TrackBadge from '@/src/components/TrackBadge';
 import TrackSwitch from '@/src/components/TrackSwitch';
+import WithReason from '@/src/components/WithReason';
 import {
   ThirtyDayValue,
   describeRank,
@@ -94,55 +95,14 @@ function NumberMaxFilter({ column }: { column: Column<ArenaScoreRow, unknown> })
 }
 
 /**
- * Column header with an info popover. Hover on a pointer, tap/keyboard on touch.
- */
-function HeaderWithInfo({
-  label,
-  ariaLabel,
-  width = 'w-48',
-  align = 'right',
-  children,
-}: {
-  label: string;
-  ariaLabel: string;
-  width?: string;
-  /** Which edge of the icon the panel lines up with; the first column has to open to the right. */
-  align?: 'left' | 'right';
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-1.5 normal-case">
-      <span className="uppercase">{label}</span>
-      <Popover className="relative group" onClick={(e) => e.stopPropagation()}>
-        {({ open }) => (
-          <>
-            <PopoverButton
-              className="flex items-center justify-center w-11 h-11 -m-[14px] rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-              aria-label={ariaLabel}
-            >
-              <Info className="w-4 h-4" aria-hidden="true" />
-            </PopoverButton>
-            <PopoverPanel
-              static
-              className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-6 ${width} p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg transition-all duration-200 z-10 normal-case font-normal tracking-normal ${
-                open ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
-              }`}
-            >
-              {children}
-            </PopoverPanel>
-          </>
-        )}
-      </Popover>
-    </div>
-  );
-}
-
-/**
  * Stand-in for an absent board. Callers routinely write `rankings={map[id] || []}`,
  * which mints a new empty array every render; funnelling those through one
  * constant keeps the `data` reference react-table sees stable. See the memo below.
  */
 const NO_RANKINGS: ArenaScoreRow[] = [];
+
+const RANK_PILL =
+  'inline-flex items-center justify-center shrink-0 min-w-7 h-7 px-2 rounded-full bg-gray-100 text-xs font-bold';
 
 /** Left-edge colour marking a row's track; transparent when the track is unknown. */
 function trackAccent(row: ArenaScoreRow): string {
@@ -159,9 +119,9 @@ function RankCell({ row, trackView }: { row: ArenaScoreRow; trackView: TrackView
   const rank = describeRank(row, trackView);
   return (
     <div>
-      <span className={rank.ranked ? 'font-semibold text-gray-900' : 'text-gray-500'} title={rank.title}>
+      <WithReason reason={rank.title} className={rank.ranked ? 'font-semibold text-gray-900' : 'text-gray-500'}>
         {rank.text}
-      </span>
+      </WithReason>
       {rank.ranked && trackView !== 'all' && (
         <div className="text-xs text-gray-400" title="Rank range on the combined board of both tracks">
           {describeRank(row, 'all').text} overall
@@ -177,8 +137,8 @@ function ScoreCell({ row }: { row: ArenaScoreRow }) {
     <div className="text-right">
       <span className="font-semibold">{row.score === null ? '–' : formatScore(row.score)}</span>
       {interval && (
-        <div className="text-xs text-gray-500" title="95 % confidence interval">
-          {interval}
+        <div className="text-xs text-gray-500">
+          <WithReason reason="95 % confidence interval">{interval}</WithReason>
         </div>
       )}
     </div>
@@ -189,9 +149,9 @@ function ScoreCell({ row }: { row: ArenaScoreRow }) {
 function ThirtyDayCell({ value }: { value: ThirtyDayValue }) {
   if (value.text === null) {
     return (
-      <span className="text-gray-400 text-right block" title={value.hint}>
+      <WithReason reason={value.hint} className="text-gray-400 text-right block">
         –
-      </span>
+      </WithReason>
     );
   }
   return <span className="text-right block">{value.text}</span>;
@@ -211,10 +171,14 @@ function ThirtyDayLine({ label, value }: { label: string; value: ThirtyDayValue 
   return (
     <CardLine label={label}>
       {value.text === null ? (
-        <span className="text-gray-400" title={value.hint}>
+        <WithReason reason={value.hint} className="text-gray-400">
           –
-          {value.short && <span className="ml-1.5 text-xs text-gray-500">{value.short}</span>}
-        </span>
+          {value.short && (
+            <span className="ml-1.5 text-xs text-gray-500" aria-hidden="true">
+              {value.short}
+            </span>
+          )}
+        </WithReason>
       ) : (
         <span className="text-gray-900">{value.text}</span>
       )}
@@ -247,7 +211,7 @@ export default function RankingTableArenaScore({
   // track filter runs here, before react-table, so sorting, the column filters
   // and the collapsed-row limit all act on the rows that are shown.
   const data = useMemo(() => {
-    const rows = filterByTrack((rankings ?? NO_RANKINGS).filter(isListed), trackView);
+    const rows = filterByTrack(rankings.filter(isListed), trackView);
     return rows.length ? rows : NO_RANKINGS;
   }, [rankings, trackView]);
 
@@ -259,9 +223,9 @@ export default function RankingTableArenaScore({
         sortUndefined: 'last',
         sortDescFirst: false,
         header: () => (
-          <HeaderWithInfo label="Rank" ariaLabel="About the rank" width="w-72" align="left">
+          <LabelWithInfo label="Rank" ariaLabel="About the rank" width="w-72" align="left">
             <RankExplanation />
-          </HeaderWithInfo>
+          </LabelWithInfo>
         ),
         cell: (info) => <RankCell row={info.row.original} trackView={trackView} />,
       },
@@ -282,9 +246,9 @@ export default function RankingTableArenaScore({
         accessorFn: (row) => row.score ?? undefined,
         sortUndefined: 'last',
         header: () => (
-          <HeaderWithInfo label="Arena Score" ariaLabel="About the Arena Score" width="w-72">
+          <LabelWithInfo label="Arena Score" ariaLabel="About the Arena Score" width="w-72">
             <ScoreExplanation />
-          </HeaderWithInfo>
+          </LabelWithInfo>
         ),
         cell: (info) => <ScoreCell row={info.row.original} />,
       },
@@ -293,9 +257,9 @@ export default function RankingTableArenaScore({
         accessorFn: (row) => row.mase_30d ?? undefined,
         sortUndefined: 'last',
         header: () => (
-          <HeaderWithInfo label="MASE (30 days)" ariaLabel="About MASE (30 days)" width="w-72">
+          <LabelWithInfo label="MASE (30 days)" ariaLabel="About MASE (30 days)" width="w-72">
             <MaseExplanation />
-          </HeaderWithInfo>
+          </LabelWithInfo>
         ),
         cell: (info) => <ThirtyDayCell value={maseThirtyDays(info.row.original)} />,
       },
@@ -304,9 +268,9 @@ export default function RankingTableArenaScore({
         accessorFn: (row) => row.sql_30d ?? undefined,
         sortUndefined: 'last',
         header: () => (
-          <HeaderWithInfo label="SQL (30 days)" ariaLabel="About SQL (30 days)" width="w-72">
+          <LabelWithInfo label="SQL (30 days)" ariaLabel="About SQL (30 days)" width="w-72">
             <SqlExplanation />
-          </HeaderWithInfo>
+          </LabelWithInfo>
         ),
         cell: (info) => <ThirtyDayCell value={sqlThirtyDays(info.row.original)} />,
       },
@@ -327,9 +291,9 @@ export default function RankingTableArenaScore({
         size: 150,
         minSize: 150,
         header: () => (
-          <HeaderWithInfo label="Model Size" ariaLabel="About model size">
+          <LabelWithInfo label="Model Size" ariaLabel="About model size">
             Model sizes are shown in million parameters
-          </HeaderWithInfo>
+          </LabelWithInfo>
         ),
         filterFn: (row, columnId, filterValue) => {
           const value = row.getValue(columnId) as number;
@@ -431,18 +395,21 @@ export default function RankingTableArenaScore({
               className={`w-full text-left bg-white border border-gray-200 border-l-4 ${trackAccent(model)} rounded-lg shadow-sm hover:shadow-md transition-shadow p-3`}
             >
               <div className="flex items-start gap-3">
-                <span
-                  className={`inline-flex items-center justify-center shrink-0 min-w-7 h-7 px-2 rounded-full bg-gray-100 text-xs font-bold ${
-                    rank.ranked ? 'text-gray-700' : 'text-gray-400'
-                  }`}
-                  title={rank.title}
-                >
-                  {rank.ranked ? rank.text : '–'}
-                </span>
+                {rank.ranked ? (
+                  <WithReason reason={rank.title} className={`${RANK_PILL} text-gray-700`}>
+                    {rank.text}
+                  </WithReason>
+                ) : (
+                  <span className={`${RANK_PILL} text-gray-400`} title={rank.title} aria-hidden="true">
+                    –
+                  </span>
+                )}
                 <span className="min-w-0 flex-1 text-sm font-medium text-gray-900 break-words">
                   {model.model_name}
                   {!rank.ranked && (
-                    <span className="block text-xs font-normal text-gray-500">{rank.text}</span>
+                    <WithReason reason={rank.title} className="block text-xs font-normal text-gray-500">
+                      {rank.text}
+                    </WithReason>
                   )}
                   {rank.ranked && trackView !== 'all' && (
                     <span className="block text-xs font-normal text-gray-400">
@@ -458,7 +425,9 @@ export default function RankingTableArenaScore({
                   <span className="text-gray-900 font-semibold">
                     {model.score === null ? '–' : formatScore(model.score)}
                     {interval && (
-                      <span className="ml-1.5 text-xs font-normal text-gray-500">{interval}</span>
+                      <WithReason reason="95 % confidence interval" className="ml-1.5 text-xs font-normal text-gray-500">
+                        {interval}
+                      </WithReason>
                     )}
                   </span>
                 </CardLine>

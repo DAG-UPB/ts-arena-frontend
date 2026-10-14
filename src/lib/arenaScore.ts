@@ -102,7 +102,7 @@ export function describeRank(entry: RankInput, trackView: TrackView = 'all'): Ra
       };
     }
     return {
-      text: 'not ranked yet: not all challenges seen',
+      text: 'not ranked yet',
       title:
         'Since this model joined, not every challenge of this ranking has had a round yet. It gets a rank once they all have.',
       ranked: false,
@@ -129,15 +129,19 @@ export interface ThirtyDayValue {
   short: string;
 }
 
+const NO_SCORED_FORECASTS: ThirtyDayValue = {
+  text: null,
+  hint: 'No scored forecasts in the last 30 days.',
+  short: '',
+};
+
 function participationHint(prefix: string, share: number): string {
   return `${prefix} ${formatPercent(share)} of the last 30 days' tasks; shown from ${formatPercent(MIN_PARTICIPATION_30D)}.`;
 }
 
 export function maseThirtyDays(row: ArenaScoreRow): ThirtyDayValue {
   if (row.mase_30d !== null) return { text: row.mase_30d.toFixed(3), hint: '', short: '' };
-  if (row.participation_30d === null) {
-    return { text: null, hint: 'No scored forecasts in the last 30 days.', short: '' };
-  }
+  if (row.participation_30d === null) return NO_SCORED_FORECASTS;
   return {
     text: null,
     hint: participationHint('Participated in', row.participation_30d),
@@ -147,12 +151,9 @@ export function maseThirtyDays(row: ArenaScoreRow): ThirtyDayValue {
 
 export function sqlThirtyDays(row: ArenaScoreRow): ThirtyDayValue {
   if (row.sql_30d !== null) return { text: row.sql_30d.toFixed(3), hint: '', short: '' };
+  if (row.participation_30d === null) return NO_SCORED_FORECASTS;
   if (row.sql_participation_30d === null) {
-    return {
-      text: null,
-      hint: 'This model submits point forecasts only, so it has no SQL.',
-      short: 'point only',
-    };
+    return { text: null, hint: 'No quantile forecasts in the last 30 days.', short: 'no quantiles' };
   }
   return {
     text: null,

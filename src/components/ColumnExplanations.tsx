@@ -1,4 +1,9 @@
-import { DEFAULT_PROVISIONAL_WEEKS, MIN_PARTICIPATION_30D, formatPercent } from '@/src/lib/arenaScore';
+import {
+  DEFAULT_COVERAGE_TAU,
+  DEFAULT_PROVISIONAL_WEEKS,
+  MIN_PARTICIPATION_30D,
+  formatPercent,
+} from '@/src/lib/arenaScore';
 
 /** Info-popover bodies for the ranking columns, shared by the boards and the model page. */
 
@@ -17,7 +22,9 @@ export function RankExplanation() {
     <>
       The range of places the confidence intervals allow. A model&apos;s place cannot be pinned
       down more closely than that on the data so far. Models with fewer than{' '}
-      {DEFAULT_PROVISIONAL_WEEKS} weeks of results are listed without a rank.
+      {DEFAULT_PROVISIONAL_WEEKS} weeks of results, or that forecast fewer than{' '}
+      {formatPercent(DEFAULT_COVERAGE_TAU)} of a challenge&apos;s tasks since joining, are listed
+      without a rank.
     </>
   );
 }
