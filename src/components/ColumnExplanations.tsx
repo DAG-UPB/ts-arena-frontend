@@ -11,8 +11,9 @@ export function ScoreExplanation() {
   return (
     <>
       <span className="font-semibold">Arena Score</span>: compares models series by series on the
-      ratio of their errors. 1000 is the mean of the compared models and higher is better. The
-      interval below the score is its 95 % confidence interval.
+      ratio of their errors. 0 is the naive forecast, which repeats the last observed value; higher
+      is better, and 1 point is about 1 % lower error. The interval below the score is its 95 %
+      confidence interval.
     </>
   );
 }
