@@ -20,8 +20,9 @@ export function ScoreExplanation() {
 export function RankExplanation() {
   return (
     <>
-      The range of places the confidence intervals allow. A model&apos;s place cannot be pinned
-      down more closely than that on the data so far. Models with fewer than{' '}
+      The number is the model&apos;s place by Arena Score. The range below it is the span of
+      places the confidence intervals allow: the place cannot be pinned down more closely than
+      that on the data so far. Models with fewer than{' '}
       {DEFAULT_PROVISIONAL_WEEKS} weeks of results, or that forecast fewer than{' '}
       {formatPercent(DEFAULT_COVERAGE_TAU)} of a challenge&apos;s tasks since joining, are listed
       without a rank.

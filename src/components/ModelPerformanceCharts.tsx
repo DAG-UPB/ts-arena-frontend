@@ -7,6 +7,7 @@ import type { PlotParams } from 'react-plotly.js';
 import type { ArenaScoreScopeHistory } from '@/src/services/modelService';
 import { useIsMobile } from '@/src/hooks/useIsMobile';
 import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
+import RankFigure from '@/src/components/RankFigure';
 import WithReason from '@/src/components/WithReason';
 import { describeRank, formatInterval, formatScore } from '@/src/lib/arenaScore';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -319,12 +320,17 @@ export default function ModelPerformanceCharts({ scopes }: ModelPerformanceChart
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                   <div className="bg-gray-50 p-3 rounded">
                     <div className="text-gray-500 text-xs">Current Rank</div>
-                    <WithReason
-                      reason={latestRank.title}
-                      className={latestRank.ranked ? 'block text-lg font-semibold text-gray-900' : 'block text-sm text-gray-700'}
-                    >
-                      {latestRank.text}
-                    </WithReason>
+                    {latestRank.bounds ? (
+                      <RankFigure
+                        bounds={latestRank.bounds}
+                        reason={latestRank.title}
+                        className="text-lg font-semibold text-gray-900"
+                      />
+                    ) : (
+                      <WithReason reason={latestRank.title} className="block text-sm text-gray-700">
+                        {latestRank.text}
+                      </WithReason>
+                    )}
                   </div>
                   <div className="bg-gray-50 p-3 rounded">
                     <div className="text-gray-500 text-xs">Current Arena Score</div>

@@ -24,11 +24,13 @@ import LabelWithInfo from '@/src/components/LabelWithInfo';
 import MetricSwitch from '@/src/components/MetricSwitch';
 import TrackBadge from '@/src/components/TrackBadge';
 import TrackSwitch from '@/src/components/TrackSwitch';
+import RankFigure from '@/src/components/RankFigure';
 import WithReason from '@/src/components/WithReason';
 import {
   ThirtyDayValue,
   describeRank,
   formatInterval,
+  formatRankRange,
   formatScore,
   isListed,
   maseThirtyDays,
@@ -109,19 +111,24 @@ function trackAccent(row: ArenaScoreRow): string {
   return isTrack(row.track) ? TRACK_STYLE[row.track].accent : 'border-l-transparent';
 }
 
-/** Sort key of the rank column: best rank first, then worst. Unranked rows have none. */
+/** Sort key of the rank column: place first, then best and worst rank. Unranked rows have none. */
 function rankSortKey(row: ArenaScoreRow, trackView: TrackView): number | undefined {
   const bounds = rankBounds(row, trackView);
-  return bounds ? bounds.best * 100_000 + bounds.worst : undefined;
+  if (!bounds) return undefined;
+  return (bounds.place ?? bounds.best) * 10_000_000_000 + bounds.best * 100_000 + bounds.worst;
 }
 
 function RankCell({ row, trackView }: { row: ArenaScoreRow; trackView: TrackView }) {
   const rank = describeRank(row, trackView);
   return (
     <div>
-      <WithReason reason={rank.title} className={rank.ranked ? 'font-semibold text-gray-900' : 'text-gray-500'}>
-        {rank.text}
-      </WithReason>
+      {rank.bounds ? (
+        <RankFigure bounds={rank.bounds} reason={rank.title} />
+      ) : (
+        <WithReason reason={rank.title} className="text-gray-500">
+          {rank.text}
+        </WithReason>
+      )}
       {rank.ranked && trackView !== 'all' && (
         <div className="text-xs text-gray-400" title="Rank range on the combined board of both tracks">
           {describeRank(row, 'all').text} overall
@@ -395,9 +402,9 @@ export default function RankingTableArenaScore({
               className={`w-full text-left bg-white border border-gray-200 border-l-4 ${trackAccent(model)} rounded-lg shadow-sm hover:shadow-md transition-shadow p-3`}
             >
               <div className="flex items-start gap-3">
-                {rank.ranked ? (
+                {rank.bounds ? (
                   <WithReason reason={rank.title} className={`${RANK_PILL} text-gray-700`}>
-                    {rank.text}
+                    {rank.bounds.place ?? rank.text}
                   </WithReason>
                 ) : (
                   <span className={`${RANK_PILL} text-gray-400`} title={rank.title} aria-hidden="true">
@@ -410,6 +417,11 @@ export default function RankingTableArenaScore({
                     <WithReason reason={rank.title} className="block text-xs font-normal text-gray-500">
                       {rank.text}
                     </WithReason>
+                  )}
+                  {rank.bounds?.place != null && rank.bounds.best !== rank.bounds.worst && (
+                    <span className="block text-xs font-normal text-gray-500">
+                      rank range {formatRankRange(rank.bounds.best, rank.bounds.worst)}
+                    </span>
                   )}
                   {rank.ranked && trackView !== 'all' && (
                     <span className="block text-xs font-normal text-gray-400">
