@@ -35,9 +35,11 @@ export function MaseExplanation() {
   return (
     <>
       <span className="font-semibold">MASE (30 days)</span>: the geometric mean of the
-      model&apos;s MASE over the last 30 days. Lower is better. Shown for models that took part
-      in at least {formatPercent(MIN_PARTICIPATION_30D)} of that period&apos;s tasks. A task is
-      one series in one round.
+      model&apos;s MASE over the last 30 days. MASE divides the model&apos;s mean absolute error
+      by that of a seasonal naive forecast on the history the models were given, which predicts
+      each value with the one a day earlier (a week earlier for daily data). Lower is better.
+      Shown for models that took part in at least {formatPercent(MIN_PARTICIPATION_30D)} of that
+      period&apos;s tasks. A task is one series in one round.
     </>
   );
 }
@@ -46,8 +48,9 @@ export function SqlExplanation() {
   return (
     <>
       <span className="font-semibold">Scaled Quantile Loss</span>: the mean pinball loss over the
-      nine deciles (0.1 … 0.9), divided by the same naive-forecast MAE that scales MASE. Shown as
-      the geometric mean over the last 30 days. Lower is better, and the two metrics are on one
+      nine deciles (0.1 … 0.9), divided by the same scale as MASE: the mean absolute error of the
+      seasonal naive forecast on the history the models were given. Shown as the geometric mean
+      over the last 30 days. Lower is better, and the two metrics are on one
       scale, so they can be read side by side. Only models that submit quantile forecasts have it,
       from {formatPercent(MIN_PARTICIPATION_30D)} participation.
     </>

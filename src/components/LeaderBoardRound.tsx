@@ -218,7 +218,7 @@ export default function LeaderBoardRound({ leaderboard, loading, status }: Leade
                       <th
                         scope="col"
                         className="px-2 py-2 sm:px-3 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50"
-                        title="Scaled Quantile Loss: mean pinball loss over the nine deciles, divided by the same naive-forecast MAE that scales MASE. Lower is better. Only models that submit quantile forecasts are scored on it."
+                        title="Scaled Quantile Loss: mean pinball loss over the nine deciles, divided by the same scale as MASE. Lower is better. Only models that submit quantile forecasts are scored on it."
                       >
                         Avg SQL
                       </th>
