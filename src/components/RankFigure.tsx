@@ -8,13 +8,13 @@ interface RankFigureProps {
   className?: string;
 }
 
-/** The place in large type with the rank range below it; a single place has no range line. */
+/** The place in large type, centred over the rank range; a single place has no range line. */
 export default function RankFigure({ bounds, reason, className = 'font-semibold text-gray-900' }: RankFigureProps) {
   const spread = bounds.best !== bounds.worst;
   const place = bounds.place ?? formatRankRange(bounds.best, bounds.worst);
   return (
-    <WithReason reason={reason} className="block">
-      <span className={`block ${className}`}>{place}</span>
+    <WithReason reason={reason} className="inline-flex flex-col items-center">
+      <span className={className}>{place}</span>
       {bounds.place !== null && spread && (
         <span className="flex items-center gap-1 text-xs font-normal text-gray-500">
           {bounds.best}
