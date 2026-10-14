@@ -8,12 +8,10 @@ import ModelSeriesList from '@/src/components/ModelSeriesList';
 import DetailsCard from '@/src/components/DetailsCard';
 import ModelActiveRounds from '@/src/components/ModelActiveRounds';
 import ModelMetricSummary from '@/src/components/ModelMetricSummary';
+import MetricSwitch from '@/src/components/MetricSwitch';
 import TrackBadge from '@/src/components/TrackBadge';
 import { REFERENCE_MODELS_REPO_URL, isTrack, type Track } from '@/src/lib/tracks';
-import { getModelRankings, ModelDetailRankings, getModelSeriesByDefinition, ModelSeriesByDefinition, getModelDetails, ModelDetails, getModelActiveRounds, ModelActiveRoundsResponse, getFilteredRankings, ModelRanking } from '@/src/services/modelService';
-
-/** Enough to cover the global board; it holds well under a hundred models. */
-const GLOBAL_BOARD_LIMIT = 500;
+import { getModelArenaScores, ModelArenaScores, ScoreMetric, getModelSeriesByDefinition, ModelSeriesByDefinition, getModelDetails, ModelDetails, getModelActiveRounds, ModelActiveRoundsResponse, getArenaScores, ArenaScoreRow } from '@/src/services/modelService';
 
 /** What the model's track means, for the Track field of the details card. */
 function trackDescription(track: Track) {
@@ -76,12 +74,17 @@ export default function ModelDetailPage() {
   const modelId = params.modelId as string;
   
   const [modelDetails, setModelDetails] = useState<ModelDetails | null>(null);
-  const [rankingsData, setRankingsData] = useState<ModelDetailRankings | null>(null);
+  // The Arena Score history of both views; the probabilistic one is empty for a
+  // model that sends no quantiles.
+  const [history, setHistory] = useState<Record<ScoreMetric, ModelArenaScores | null>>({
+    point: null,
+    probabilistic: null,
+  });
+  const [metric, setMetric] = useState<ScoreMetric>('point');
   const [seriesData, setSeriesData] = useState<ModelSeriesByDefinition | null>(null);
   const [activeRoundsData, setActiveRoundsData] = useState<ModelActiveRoundsResponse | null>(null);
-  // This model's row on the global board, plus whether it is scored on the SQL one.
-  const [globalRanking, setGlobalRanking] = useState<ModelRanking | null>(null);
-  const [sqlEligible, setSqlEligible] = useState(false);
+  // This model's row on the global board.
+  const [globalRanking, setGlobalRanking] = useState<ArenaScoreRow | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,39 +94,41 @@ export default function ModelDetailPage() {
         return;
       }
       setLoading(true);
-      // Settled, not all: a model that has not been ranked yet 404s on the rankings
-      // endpoints, and that must not take the rest of the page down with it.
-      const [details, rankings, series, activeRounds, globalBoard, globalSqlBoard] =
+      // Settled, not all: a model that has not been scored yet may fail on the
+      // Arena Score endpoints, and that must not take the rest of the page down with it.
+      const [details, pointHistory, probabilisticHistory, series, activeRounds, globalBoard] =
         await Promise.allSettled([
           getModelDetails(modelId),
-          getModelRankings(modelId),
+          getModelArenaScores(modelId, 'point'),
+          getModelArenaScores(modelId, 'probabilistic'),
           getModelSeriesByDefinition(modelId),
           getModelActiveRounds(modelId),
-          // The per-model rankings endpoint returns ELO only, so the accuracy
-          // figures come from this model's row on the global boards.
-          getFilteredRankings({ limit: GLOBAL_BOARD_LIMIT }),
-          getFilteredRankings({ limit: GLOBAL_BOARD_LIMIT, metric: 'sql' }),
+          // The history carries no accuracy figures, so those come from this
+          // model's row on the global board.
+          getArenaScores(),
         ]);
 
       setModelDetails(valueOf(details, 'model details'));
-      setRankingsData(valueOf(rankings, 'model rankings'));
+      setHistory({
+        point: valueOf(pointHistory, 'model Arena Score history'),
+        probabilistic: valueOf(probabilisticHistory, 'model probabilistic Arena Score history'),
+      });
       setSeriesData(valueOf(series, 'series by definition'));
       setActiveRoundsData(valueOf(activeRounds, 'active rounds'));
 
       const numericId = Number(modelId);
       const board = valueOf(globalBoard, 'global rankings');
-      const sqlBoard = valueOf(globalSqlBoard, 'global SQL rankings');
       setGlobalRanking(
         board?.rankings.find((r) => r.model_id === numericId) ?? null
-      );
-      setSqlEligible(
-        sqlBoard?.rankings.some((r) => r.model_id === numericId) ?? false
       );
       setLoading(false);
     };
 
     fetchData();
   }, [modelId]);
+
+  const hasProbabilistic = (history.probabilistic?.scopes.length ?? 0) > 0;
+  const shownHistory = hasProbabilistic ? history[metric] : history.point;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -242,7 +247,7 @@ export default function ModelDetailPage() {
         )}
 
         {!loading && (
-          <ModelMetricSummary ranking={globalRanking} sqlEligible={sqlEligible} />
+          <ModelMetricSummary ranking={globalRanking} />
         )}
 
         {!loading && activeRoundsData && activeRoundsData.rounds.length > 0 && (
@@ -250,16 +255,19 @@ export default function ModelDetailPage() {
         )}
 
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Ranking Performance Over Time</h2>
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+            <h2 className="text-2xl font-semibold text-gray-900">Ranking Performance Over Time</h2>
+            {!loading && hasProbabilistic && <MetricSwitch value={metric} onChange={setMetric} />}
+          </div>
           <p className="text-sm text-gray-600 mb-6">
-            ELO score evolution across all challenges, individual challenge definitions, and frequency/horizon combinations. Forecasts are evaluated hourly; standings shown here are aggregated and reported monthly.
+            Arena Score evolution across all challenges, individual challenge definitions, and frequency/horizon combinations. Forecasts are evaluated hourly; the chart shows the standing on each calculation date.
           </p>
           {loading ? (
             <div className="text-center">
               <div className="text-lg text-gray-600">Loading rankings...</div>
             </div>
-          ) : rankingsData ? (
-            <ModelPerformanceCharts definitionRankings={rankingsData.definition_rankings} />
+          ) : shownHistory ? (
+            <ModelPerformanceCharts scopes={shownHistory.scopes} />
           ) : (
             <div className="text-center">
               <div className="text-lg text-gray-600">Failed to load rankings data.</div>
