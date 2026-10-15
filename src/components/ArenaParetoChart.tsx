@@ -95,7 +95,8 @@ export default function ArenaParetoChart({
   let prevAbove = false;
   for (const p of front) {
     const above: boolean = !(prevAbove && prev && p.size / prev.size < 1.8);
-    labelPosition.set(p.row.model_id, above ? 'top center' : 'bottom right');
+    const first = prev === null;
+    labelPosition.set(p.row.model_id, above ? (first ? 'top right' : 'top center') : 'bottom right');
     prev = p;
     prevAbove = above;
   }
@@ -220,7 +221,9 @@ export default function ArenaParetoChart({
         </div>
       </div>
 
+      {/* Remount on a view change: Plotly.react drops the per-point labels when it updates in place. */}
       <Plot
+        key={`${trackView}-${metric}-${calculationDate}`}
         data={data}
         layout={layout}
         config={isMobile ? MOBILE_PLOT_CONFIG : { responsive: true, displaylogo: false }}
