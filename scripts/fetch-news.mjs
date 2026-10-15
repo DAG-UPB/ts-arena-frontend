@@ -43,11 +43,42 @@ const staging = `${TARGET}.tmp`;
 fs.rmSync(staging, { recursive: true, force: true });
 fs.mkdirSync(path.dirname(TARGET), { recursive: true });
 
+/**
+ * Moves credentials from the clone URL into an Authorization header. libcurl
+ * builds that drop credentials from the effective URL make git read the
+ * response as a redirect and retry without them.
+ */
+function credentialsAsHeader(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return { url, env: {} };
+  }
+  if (!parsed.username && !parsed.password) return { url, env: {} };
+  const user = decodeURIComponent(parsed.username);
+  const pass = decodeURIComponent(parsed.password);
+  // A bare token in the user part is GitHub's token-only URL form.
+  const pair = pass ? `${user}:${pass}` : `x-access-token:${user}`;
+  parsed.username = '';
+  parsed.password = '';
+  return {
+    url: parsed.toString(),
+    env: {
+      GIT_CONFIG_COUNT: '1',
+      GIT_CONFIG_KEY_0: `http.${parsed.origin}/.extraheader`,
+      GIT_CONFIG_VALUE_0: `Authorization: Basic ${Buffer.from(pair).toString('base64')}`,
+    },
+  };
+}
+
+const clone = credentialsAsHeader(repo);
+
 try {
-  execFileSync('git', ['clone', '--depth', '1', '--branch', ref, repo, staging], {
+  execFileSync('git', ['clone', '--depth', '1', '--branch', ref, clone.url, staging], {
     stdio: ['ignore', 'inherit', 'pipe'],
     // Bad credentials should fail the build, not hang it on a username prompt.
-    env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+    env: { ...process.env, ...clone.env, GIT_TERMINAL_PROMPT: '0' },
   });
 } catch (err) {
   // Fail the build loudly. A silent fallback to "no news" would ship a site
