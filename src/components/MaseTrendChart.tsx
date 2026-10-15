@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { PlotParams } from 'react-plotly.js';
+import InfoPopover from '@/src/components/InfoPopover';
 import TrackSwitch from '@/src/components/TrackSwitch';
 import { useIsMobile } from '@/src/hooks/useIsMobile';
 import { MOBILE_PLOT_CONFIG, MOBILE_PLOT_HEIGHT, MOBILE_PLOT_MARGIN } from '@/src/components/plotMobile';
@@ -257,27 +258,20 @@ export default function MaseTrendChart({
         </div>
       </div>
 
-      <p className="text-sm text-gray-600 mb-2">{TRACK_VIEW_LABEL[trackView]}. The five best models of the newest week are in colour.</p>
+      <div className="relative flex items-center gap-2 mb-2">
+        <p className="text-sm text-gray-600">{TRACK_VIEW_LABEL[trackView]}. The five best models of the newest week are in colour.</p>
+        <InfoPopover ariaLabel="How to read this chart">
+          <p>Each point covers the 30 days before that Monday. Neighbouring points overlap.</p>
+          <p>A model appears once it has forecast 80 % of the tasks.</p>
+          {valueView === 'absolute' ? (
+            <p>Below 1 beats the seasonal naive forecast. All models move with the season.</p>
+          ) : (
+            <p>1 is the typical model on the same tasks. 0.9 is 10 % lower error.</p>
+          )}
+        </InfoPopover>
+      </div>
 
       {body}
-
-      <div className="mt-3 space-y-1 text-sm text-gray-600">
-        <p>
-          Each point covers the rounds that ended in the 30 days before that Monday. Points one week apart
-          share 23 of those days. A model shows once it has forecast at least 80 % of the tasks.
-        </p>
-        {valueView === 'absolute' ? (
-          <p>
-            Below 1 beats a seasonal naive forecast, the value one day earlier, on the history the models
-            were given. All models move up and down with the season.
-          </p>
-        ) : (
-          <p>
-            1 is the typical model on the same tasks. 0.9 is 10 % lower error. The field is all models, so
-            its level shifts as models join or leave.
-          </p>
-        )}
-      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { PlotParams } from 'react-plotly.js';
+import InfoPopover from '@/src/components/InfoPopover';
 import MetricSwitch from '@/src/components/MetricSwitch';
 import TrackSwitch from '@/src/components/TrackSwitch';
 import { useIsMobile } from '@/src/hooks/useIsMobile';
@@ -210,10 +211,18 @@ export default function ArenaParetoChart({
   return (
     <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <p className="text-sm text-gray-600">
-          {TRACK_VIEW_LABEL[trackView]}, overall ranking
-          {calculationDate ? `, as of ${calculationDate}` : ''}.
-        </p>
+        <div className="relative flex items-center gap-2">
+          <p className="text-sm text-gray-600">
+            {TRACK_VIEW_LABEL[trackView]}, overall ranking
+            {calculationDate ? `, as of ${calculationDate}` : ''}.
+          </p>
+          <InfoPopover ariaLabel="How to read this chart">
+            <p>On the line: no smaller model scores higher.</p>
+            <p>0 is the naive forecast. 1 point is about 1 % lower error.</p>
+            <p>Whiskers show the 95 % interval. Where they overlap, the order is not settled.</p>
+            <p>Statistical methods and models under 0.5M parameters are drawn at 0.5M.</p>
+          </InfoPopover>
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <MetricSwitch value={metric} onChange={onMetricChange} />
           <TrackSwitch value={trackView} onChange={onTrackViewChange} />
@@ -229,18 +238,6 @@ export default function ArenaParetoChart({
         style={{ width: '100%', height: isMobile ? MOBILE_PLOT_HEIGHT : '460px' }}
         useResizeHandler
       />
-
-      <div className="mt-3 space-y-1 text-sm text-gray-600">
-        <p>
-          Each point is a ranked model. Models on the line are beaten by no smaller model.
-          Sizes below 0.5M parameters, statistical methods included, are drawn at 0.5M.
-        </p>
-        <p>
-          0 is the naive forecast. 1 point is about 1 % lower error. The whiskers show the 95 %
-          interval. Near the top they overlap, so the order there is not settled.
-        </p>
-        <p>Sizes come from the model registry. Open Track models report their own.</p>
-      </div>
     </div>
   );
 }
