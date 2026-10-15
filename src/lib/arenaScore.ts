@@ -33,10 +33,10 @@ export function formatRank(bounds: RankBounds): string {
   return `${bounds.place} (${range})`;
 }
 
-/** Rows a table shows: scored models, and in the global table only those with enough coverage. */
+/** Rows a table shows: scored models, and outside a single challenge only those with enough coverage. */
 export function isListed(row: ArenaScoreRow): boolean {
   if (row.score === null) return false;
-  return !(row.scope_type === 'global' && row.low_coverage);
+  return row.scope_type === 'definition' || !row.low_coverage;
 }
 
 interface RankInput {

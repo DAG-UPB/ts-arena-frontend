@@ -23,10 +23,10 @@ export function RankExplanation() {
     <>
       The number is the model&apos;s place by Arena Score. The range below it is the span of
       places the confidence intervals allow: the place cannot be pinned down more closely than
-      that on the data so far. Models with fewer than{' '}
-      {DEFAULT_PROVISIONAL_WEEKS} weeks of results, or that forecast fewer than{' '}
-      {formatPercent(DEFAULT_COVERAGE_TAU)} of a challenge&apos;s tasks since joining, are listed
-      without a rank.
+      that on the data so far. Models with fewer than {DEFAULT_PROVISIONAL_WEEKS} weeks of
+      results are listed without a rank. A model is only listed once it has forecast at least{' '}
+      {formatPercent(DEFAULT_COVERAGE_TAU)} of the tasks in every challenge of the ranking since
+      joining.
     </>
   );
 }
