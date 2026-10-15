@@ -12,26 +12,21 @@ import { TRACK_VIEW_LABEL, type TrackView } from '@/src/lib/tracks';
 
 const Plot = dynamic(() => import('@/src/components/PlotlyPlot'), { ssr: false });
 
-type ValueView = 'absolute' | 'relative';
-
-const VALUE_LABEL: Record<ValueView, string> = { absolute: 'MASE', relative: 'Relative to the field' };
-const VALUE_TITLE: Record<ValueView, string> = {
-  absolute: 'The 30-day MASE as on the leaderboard.',
-  relative: 'MASE divided by the typical model on the same tasks. Removes the season and the series mix.',
-};
-
 const HIGHLIGHTED = 5;
 const BASELINE = 'seasonal-naive';
 const LINE_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c'];
 const OTHER_COLOR = '#d1d5db';
 const BASELINE_COLOR = '#4b5563';
+const WINDOW_DAYS = 365;
 
-function valueOf(view: ValueView, p: { mase_30d: number | null; mase_rel_30d: number | null }): number | null {
-  return view === 'absolute' ? p.mase_30d : p.mase_rel_30d;
-}
-
-function latestOf(view: ValueView, m: MaseHistoryModel): number | null {
-  return view === 'absolute' ? m.latest_mase_30d : m.latest_mase_rel_30d;
+// ISO week strings sort chronologically, so the cutoff is a plain string comparison.
+function lastYear(weeks: string[]): string[] {
+  const newest = weeks[weeks.length - 1];
+  if (!newest) return [];
+  const cutoff = new Date(`${newest.slice(0, 10)}T00:00:00Z`);
+  cutoff.setUTCDate(cutoff.getUTCDate() - WINDOW_DAYS);
+  const from = cutoff.toISOString().slice(0, 10);
+  return weeks.filter((w) => w.slice(0, 10) > from);
 }
 
 function isBaseline(m: MaseHistoryModel): boolean {
@@ -55,7 +50,6 @@ export default function MaseTrendChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
-  const [valueView, setValueView] = useState<ValueView>('absolute');
   const [histories, setHistories] = useState<Record<string, MaseHistory>>({});
   const [failed, setFailed] = useState<Record<string, boolean>>({});
 
@@ -92,18 +86,22 @@ export default function MaseTrendChart({
   }, [visible, scope, histories, failed]);
 
   const history = scope ? histories[scope] : undefined;
+  const weeks = useMemo(() => lastYear(history?.weeks ?? []), [history]);
 
   const { highlighted, others, baseline } = useMemo(() => {
-    const models = (history?.models ?? []).filter((m) => trackView === 'all' || m.track === trackView);
+    const shown = new Set(weeks);
+    const models = (history?.models ?? []).filter(
+      (m) => (trackView === 'all' || m.track === trackView) && m.points.some((p) => shown.has(p.week))
+    );
     const baseline = models.find(isBaseline) ?? null;
     const ranked = models
-      .filter((m) => !isBaseline(m) && latestOf(valueView, m) != null)
-      .sort((a, b) => (latestOf(valueView, a) as number) - (latestOf(valueView, b) as number));
+      .filter((m) => !isBaseline(m) && m.latest_mase_30d != null)
+      .sort((a, b) => (a.latest_mase_30d as number) - (b.latest_mase_30d as number));
     const highlighted = ranked.slice(0, HIGHLIGHTED);
     const top = new Set(highlighted.map((m) => m.model_id));
     const others = models.filter((m) => !top.has(m.model_id) && m !== baseline);
     return { highlighted, others, baseline };
-  }, [history, trackView, valueView]);
+  }, [history, weeks, trackView]);
 
   const trace = (
     m: MaseHistoryModel,
@@ -111,7 +109,6 @@ export default function MaseTrendChart({
     legend: { show: boolean; group?: string; name?: string }
   ) => {
     const byWeek = new Map(m.points.map((p) => [p.week, p]));
-    const weeks = history?.weeks ?? [];
     return {
       type: 'scatter' as const,
       mode: 'lines' as const,
@@ -121,7 +118,7 @@ export default function MaseTrendChart({
       x: weeks,
       y: weeks.map((w) => {
         const p = byWeek.get(w);
-        return p ? valueOf(valueView, p) : null;
+        return p ? p.mase_30d : null;
       }),
       customdata: weeks.map((w) => {
         const p = byWeek.get(w);
@@ -129,7 +126,7 @@ export default function MaseTrendChart({
       }),
       hovertemplate:
         '<b>%{customdata[0]}</b><br>30 days to %{x|%d %b %Y}<br>' +
-        `${VALUE_LABEL[valueView]}: %{y:.3f}<br>Participation: %{customdata[1]}<extra></extra>`,
+        'MASE: %{y:.3f}<br>Participation: %{customdata[1]}<extra></extra>',
       line: { color: style.color, width: style.width, dash: style.dash },
       connectgaps: false,
     };
@@ -145,7 +142,7 @@ export default function MaseTrendChart({
 
   const yaxis = {
     type: 'log' as const,
-    title: { text: valueView === 'absolute' ? 'MASE (30 days, log scale)' : 'MASE relative to the field (log scale)' },
+    title: { text: 'MASE (30 days, log scale)' },
     gridcolor: '#e5e7eb',
     zeroline: false,
   };
@@ -198,7 +195,7 @@ export default function MaseTrendChart({
   } else {
     body = (
       <Plot
-        key={`${scope}-${valueView}-${trackView}`}
+        key={`${scope}-${trackView}`}
         data={data}
         layout={layout}
         config={isMobile ? MOBILE_PLOT_CONFIG : { responsive: true, displaylogo: false }}
@@ -229,33 +226,7 @@ export default function MaseTrendChart({
             ))}
           </select>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div
-            role="radiogroup"
-            aria-label="MASE view"
-            className="inline-flex rounded-md border border-gray-200 bg-white p-0.5"
-          >
-            {(['absolute', 'relative'] as ValueView[]).map((view) => {
-              const isSelected = view === valueView;
-              return (
-                <button
-                  key={view}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  title={VALUE_TITLE[view]}
-                  onClick={() => setValueView(view)}
-                  className={`inline-flex min-h-[32px] items-center rounded px-2.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
-                    isSelected ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {VALUE_LABEL[view]}
-                </button>
-              );
-            })}
-          </div>
-          <TrackSwitch value={trackView} onChange={onTrackViewChange} />
-        </div>
+        <TrackSwitch value={trackView} onChange={onTrackViewChange} />
       </div>
 
       <div className="relative flex items-center gap-2 mb-2">
@@ -263,11 +234,7 @@ export default function MaseTrendChart({
         <InfoPopover ariaLabel="How to read this chart">
           <p>Each point covers the 30 days before that Monday. Neighbouring points overlap.</p>
           <p>A model appears once it has forecast 80 % of the tasks.</p>
-          {valueView === 'absolute' ? (
-            <p>Below 1 beats the seasonal naive forecast. All models move with the season.</p>
-          ) : (
-            <p>1 is the typical model on the same tasks. 0.9 is 10 % lower error.</p>
-          )}
+          <p>Below 1 beats the seasonal naive forecast. All models move with the season.</p>
         </InfoPopover>
       </div>
 
