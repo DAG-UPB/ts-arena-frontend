@@ -181,12 +181,12 @@ export default function InfoPage() {
             <div>
               <h3 className="font-medium text-gray-900 mb-1">Where You Appear</h3>
               <p className="text-sm text-gray-600">
-                A scored model shows up in that challenge&apos;s leaderboard and in the aggregate views
-                (domain, category, frequency). The overall ranking is stricter: a model enters it only once
-                it has taken part in every challenge, and in at least half of each challenge&apos;s rounds
-                since it joined, so nobody gains by covering only the challenges that suit them. Rankings
-                are recomputed four times a day. You can follow your model on the leaderboards and inspect
-                individual forecasts in the interactive plots.
+                A scored model appears on the leaderboard of each challenge it forecasts. It shows its Arena
+                Score with a confidence interval. It gets a rank after four weeks of results. It also needs a
+                complete forecast for at least half of the challenge&apos;s tasks since it joined. A task is one
+                series in one round. The overall ranking lists a model only once it meets this in every
+                challenge. Rankings are updated four times a day. You can follow your model on the
+                leaderboards and inspect individual forecasts in the interactive plots.
               </p>
             </div>
           </div>
