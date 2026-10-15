@@ -14,7 +14,7 @@ const Plot = dynamic(() => import('@/src/components/PlotlyPlot'), { ssr: false }
 
 /** Smallest size on the axis; known sizes below it, including 0, are drawn here. */
 const MIN_SIZE = 0.5;
-/** The y axis stops this far below the lowest front point; models below are listed instead. */
+/** The y axis stops this far below the lowest front point. */
 const FLOOR_MARGIN = 8;
 const TICKS = [0.5, 1, 3, 10, 30, 100, 300, 1000, 3000];
 
@@ -60,7 +60,7 @@ export default function ArenaParetoChart({
 }: ArenaParetoChartProps) {
   const isMobile = useIsMobile();
 
-  const { points, front, floor, below } = useMemo(() => {
+  const { points, front, floor } = useMemo(() => {
     const shown = rows.filter(
       (r) =>
         r.rank_best != null &&
@@ -75,8 +75,7 @@ export default function ArenaParetoChart({
     const points: Point[] = base.map((p, i) => ({ ...p, onFront: mask[i] }));
     const front = points.filter((p) => p.onFront);
     const floor = front.length ? Math.min(...front.map((p) => p.score)) - FLOOR_MARGIN : 0;
-    const below = points.filter((p) => p.score < floor).sort((a, b) => a.score - b.score);
-    return { points, front, floor, below };
+    return { points, front, floor };
   }, [rows, trackView]);
 
   const calculationDate = rows[0]?.calculation_date;
@@ -230,12 +229,6 @@ export default function ArenaParetoChart({
         style={{ width: '100%', height: isMobile ? MOBILE_PLOT_HEIGHT : '460px' }}
         useResizeHandler
       />
-
-      {below.length > 0 && (
-        <p className="mt-1 text-xs text-gray-500">
-          Below the chart: {below.map((p) => `${p.row.model_name} (${p.score.toFixed(1)})`).join(', ')}.
-        </p>
-      )}
 
       <div className="mt-3 space-y-1 text-sm text-gray-600">
         <p>
