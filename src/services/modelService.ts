@@ -223,6 +223,43 @@ export async function getArenaScoreFilters(): Promise<FilterOptions> {
   return data;
 }
 
+export interface MaseWeek {
+  week: string;
+  mase_30d: number | null;
+  mase_rel_30d: number | null;
+  participation_30d: number;
+}
+
+export interface MaseHistoryModel {
+  model_id: number;
+  model_name: string;
+  readable_id: string | null;
+  track: Track;
+  latest_mase_30d: number | null;
+  latest_mase_rel_30d: number | null;
+  points: MaseWeek[];
+}
+
+export interface MaseHistory {
+  window_days: number;
+  min_participation: number;
+  weeks: string[];
+  models: MaseHistoryModel[];
+}
+
+export async function getMase30dHistory(frequencyHorizon: string): Promise<MaseHistory> {
+  const params = new URLSearchParams({ frequency_horizon: frequencyHorizon });
+  const response = await fetch(`/api/v1/models/mase-30d-history?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch the MASE history: ${response.status}`);
+  }
+  const data = await response.json();
+  if (!Array.isArray(data?.weeks) || !Array.isArray(data?.models)) {
+    throw new Error('Unexpected mase-30d-history payload');
+  }
+  return data;
+}
+
 export async function getModelDetails(modelId: string): Promise<ModelDetails> {
   const url = `/api/v1/models/${modelId}`;
 
