@@ -15,6 +15,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 import type { ArenaScoreRow, ScoreMetric } from '@/src/services/modelService';
 import {
+  EvaluationsExplanation,
   MaseExplanation,
   RankExplanation,
   ScoreExplanation,
@@ -282,6 +283,17 @@ export default function RankingTableArenaScore({
         cell: (info) => <ThirtyDayCell value={sqlThirtyDays(info.row.original)} />,
       },
       {
+        accessorKey: 'tasks_played',
+        header: () => (
+          <LabelWithInfo label="Evaluations" ariaLabel="About evaluations" width="w-64">
+            <EvaluationsExplanation />
+          </LabelWithInfo>
+        ),
+        cell: (info) => (
+          <span className="text-right block">{(info.getValue() as number).toLocaleString()}</span>
+        ),
+      },
+      {
         accessorKey: 'organization_name',
         header: 'Organization',
         cell: (info) => (info.getValue() as string | null) ?? 'N/A',
@@ -445,6 +457,9 @@ export default function RankingTableArenaScore({
                 </CardLine>
                 <ThirtyDayLine label="MASE (30 days)" value={maseThirtyDays(model)} />
                 <ThirtyDayLine label="SQL (30 days)" value={sqlThirtyDays(model)} />
+                <CardLine label="Evaluations">
+                  <span className="text-gray-900">{model.tasks_played.toLocaleString()}</span>
+                </CardLine>
               </div>
             </button>
           );

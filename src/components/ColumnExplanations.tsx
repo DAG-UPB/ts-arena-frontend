@@ -44,6 +44,16 @@ export function MaseExplanation() {
   );
 }
 
+export function EvaluationsExplanation() {
+  return (
+    <>
+      <span className="font-semibold">Evaluations</span>: the number of tasks the model was scored
+      on here, over all rounds so far. A task is one series in one round. Only tasks the model
+      forecast in full count.
+    </>
+  );
+}
+
 export function SqlExplanation() {
   return (
     <>
