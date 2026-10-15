@@ -1,9 +1,14 @@
 import type { Track } from '@/src/lib/tracks';
 
-export interface RankingFilters {
+export type ScoreMetric = 'point' | 'probabilistic';
+
+export type ScopeType = 'global' | 'definition' | 'frequency_horizon';
+
+export interface ArenaScoreFilters {
   definition_id?: number;
   frequency_horizon?: string;
   calculation_date?: string;
+  /** Rows per scope. Defaults to the maximum: hidden rows count towards the limit. */
   limit?: number;
   /**
    * Fetch every scope of this type in a single request instead of one request
@@ -11,59 +16,59 @@ export interface RankingFilters {
    * definition_id / frequency_horizon.
    */
   scope_type?: 'definition' | 'frequency_horizon';
-  /**
-   * Which metric drove the ELO ranking. Defaults to 'mase' server-side, which is
-   * the board this UI shows. 'sql' is fetched only to learn *who is eligible* for
-   * the probabilistic board — see `collectSqlEligible`.
-   */
-  metric?: 'mase' | 'sql';
+  /** 'point' by default; 'probabilistic' lists only models that send quantiles. */
+  metric?: ScoreMetric;
 }
 
-export interface ModelRanking {
+export interface ArenaScoreRow {
   model_id: number;
   model_name: string;
-  readable_id?: string;
-  username?: string;
-  organization_name: string;
-  architecture?: string;
-  model_size?: number;
-  elo_rating_median: number;
-  elo_ci_lower: number;
-  elo_ci_upper: number;
-  elo_ci_lower_diff?: number;
-  elo_ci_upper_diff?: number;
-  matches_played: number;
-  n_bootstraps: number;
-  rank_position: number;
-  avg_mase: number | null;
-  mase_std: number | null;
-  /**
-   * Cumulative Scaled Quantile Loss. Written to every ranking row regardless of
-   * which metric drove the ELO, so it arrives on the default mase board too.
-   * It is *not* filtered by has_quantiles: for a point-only model this is the
-   * degenerate point-forecast substitution, which is why the UI only shows it
-   * for models on the SQL board.
-   */
-  avg_sql: number | null;
-  sql_std: number | null;
-  evaluated_count: number | null;
-  calculated_at?: string;
-  calculation_date: string;
-  // Present so bulk (scope_type) responses can be grouped by scope.
-  scope_id?: string | null;
-  definition_id?: number | null;
+  readable_id: string | null;
+  architecture: string | null;
+  model_size: number | null;
+  organization_name: string | null;
   /** Reference Track (implemented in ts-arena-models) or Open Track (everyone else). */
-  track?: Track;
-  /**
-   * Position among the models of the same track in this scope. ELO is fitted over
-   * both tracks together, so this is `rank_position` restricted to the track.
-   */
-  track_rank_position?: number;
+  track: Track;
+  scope_type: ScopeType;
+  /** Null for global, the definition id for a definition, `frequency::horizon` otherwise. */
+  scope_id: string | null;
+  definition_id: number | null;
+  calculation_date: string;
+  /** Null for a model that is not comparable with the rest of the scope. */
+  score: number | null;
+  ci_lower: number | null;
+  ci_upper: number | null;
+  /** Place by score among the ranked models. Null unless the model is ranked. */
+  rank: number | null;
+  /** Rank range the confidence intervals allow. Null unless the model is ranked. */
+  rank_best: number | null;
+  rank_worst: number | null;
+  /** The same place and range among the models of the row's own track. */
+  track_rank: number | null;
+  track_rank_best: number | null;
+  track_rank_worst: number | null;
+  provisional: boolean;
+  low_coverage: boolean;
+  unranked_disconnected: boolean;
+  coverage: number | null;
+  weeks_played: number;
+  tasks_played: number;
+  rounds_played: number;
+  mase_30d: number | null;
+  participation_30d: number | null;
+  sql_30d: number | null;
+  sql_participation_30d: number | null;
+  tasks_30d: number | null;
+  provisional_weeks: number | null;
+  coverage_tau: number | null;
 }
 
-export interface RankingsResponse {
-  rankings: ModelRanking[];
-  filters_applied: Record<string, any>;
+export interface ArenaScoresResponse {
+  rankings: ArenaScoreRow[];
+  scope: { type: ScopeType; id: string | null };
+  metric: ScoreMetric;
+  track: Track | null;
+  calculation_date: string | null;
 }
 
 export interface ChallengeDefinition {
@@ -80,40 +85,36 @@ export interface FilterOptions {
   }>;
 }
 
-export interface TimeRangeRanking {
-  rank: number;
-  total_models: number;
-  rounds_participated: number;
-  avg_mase: number | null;
-  stddev_mase: number | null;
-  min_mase: number | null;
-  max_mase: number | null;
-  elo_score: number | null;
-}
-
-export interface DefinitionRanking {
-  definition_id: number;
-  definition_name: string;
-  rankings_7d?: TimeRangeRanking;
-  rankings_30d?: TimeRangeRanking;
-  rankings_90d?: TimeRangeRanking;
-  rankings_365d?: TimeRangeRanking;
-}
-
-export interface DailyRanking {
+export interface ArenaScoreDaily {
   calculation_date: string;
-  elo_score: number;
-  elo_ci_lower: number;
-  elo_ci_upper: number;
-  rank_position: number;
+  score: number | null;
+  ci_lower: number | null;
+  ci_upper: number | null;
+  rank: number | null;
+  rank_best: number | null;
+  rank_worst: number | null;
+  provisional: boolean;
+  low_coverage: boolean;
+  unranked_disconnected: boolean;
+  coverage: number | null;
+  weeks_played: number;
 }
 
-export interface DefinitionRankingWithHistory {
-  definition_id: number;
-  definition_name: string;
-  scope_type: string;
-  scope_id: string;
-  daily_rankings: DailyRanking[];
+export interface ArenaScoreScopeHistory {
+  scope_type: ScopeType;
+  scope_id: string | null;
+  definition_id: number | null;
+  definition_name: string | null;
+  daily_scores: ArenaScoreDaily[];
+}
+
+export interface ModelArenaScores {
+  model_id: number;
+  model_name: string;
+  track: Track;
+  metric: ScoreMetric;
+  /** Empty when the model has no scores for the metric. */
+  scopes: ArenaScoreScopeHistory[];
 }
 
 export interface ModelDetails {
@@ -156,12 +157,6 @@ export interface ModelListItem {
   track?: Track;
 }
 
-export interface ModelDetailRankings {
-  model_id: number;
-  model_name: string;
-  definition_rankings: DefinitionRankingWithHistory[];
-}
-
 export interface SeriesInfo {
   series_id: number;
   series_name: string;
@@ -182,48 +177,37 @@ export interface ModelSeriesByDefinition {
   definitions: DefinitionWithSeries[];
 }
 
-export async function getFilteredRankings(filters: RankingFilters = {}): Promise<RankingsResponse> {
+const MAX_ARENA_SCORE_LIMIT = 1000;
+
+export async function getArenaScores(filters: ArenaScoreFilters = {}): Promise<ArenaScoresResponse> {
   const params = new URLSearchParams();
-  
+
   if (filters.scope_type) params.append('scope_type', filters.scope_type);
   if (filters.definition_id) params.append('definition_id', filters.definition_id.toString());
   if (filters.frequency_horizon) params.append('frequency_horizon', filters.frequency_horizon);
   if (filters.calculation_date) params.append('calculation_date', filters.calculation_date);
-  if (filters.limit) params.append('limit', filters.limit.toString());
   if (filters.metric) params.append('metric', filters.metric);
-  
-  const url = `/api/v1/models/rankings${params.toString() ? '?' + params.toString() : ''}`;
+  params.append('limit', (filters.limit ?? MAX_ARENA_SCORE_LIMIT).toString());
 
-  const response = await fetch(url);
+  const response = await fetch(`/api/v1/models/arena-scores?${params.toString()}`);
   if (!response.ok) {
-    throw new Error(`Failed to fetch rankings: ${response.status}`);
+    throw new Error(`Failed to fetch arena scores: ${response.status}`);
   }
-  return response.json();
+  const data = await response.json();
+  // Callers group and sort these rows straight from render, so reject a payload
+  // without them here instead of failing later.
+  if (!Array.isArray(data?.rankings)) {
+    throw new Error('Unexpected arena-scores payload');
+  }
+  return data;
 }
 
-/**
- * The set of models entitled to show a Scaled Quantile Loss number, derived from a
- * `metric=sql` rankings response.
- *
- * The SQL board excludes point-only forecasts at *row* level (backend #64), so a model
- * reaches it only if it actually submitted distributions in this scope. Membership is
- * therefore the closest thing to a "this model forecasts probabilistically here" flag
- * the rankings API offers — there is no has_quantiles column on the aggregate rows.
- *
- * Known imprecision: for the handful of models that submit quantiles on some rounds and
- * not others, the avg_sql we then display still averages in their degenerate rounds, so
- * it reads slightly worse than their true probabilistic performance.
- */
-export function collectSqlEligible(rankings: ModelRanking[]): Set<number> {
-  return new Set(rankings.map((r) => r.model_id));
-}
-
-export async function getRankingFilters(): Promise<FilterOptions> {
-  const url = '/api/v1/models/ranking-filters';
+export async function getArenaScoreFilters(): Promise<FilterOptions> {
+  const url = '/api/v1/models/arena-score-filters';
 
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to fetch ranking filters: ${response.status}`);
+    throw new Error(`Failed to fetch arena score filters: ${response.status}`);
   }
   const data = await response.json();
   // Callers read these three arrays straight from render, so a payload that is
@@ -234,7 +218,44 @@ export async function getRankingFilters(): Promise<FilterOptions> {
     !Array.isArray(data?.definitions) ||
     !Array.isArray(data?.frequency_horizons)
   ) {
-    throw new Error('Unexpected ranking-filters payload');
+    throw new Error('Unexpected arena-score-filters payload');
+  }
+  return data;
+}
+
+export interface MaseWeek {
+  week: string;
+  mase_30d: number | null;
+  mase_rel_30d: number | null;
+  participation_30d: number;
+}
+
+export interface MaseHistoryModel {
+  model_id: number;
+  model_name: string;
+  readable_id: string | null;
+  track: Track;
+  latest_mase_30d: number | null;
+  latest_mase_rel_30d: number | null;
+  points: MaseWeek[];
+}
+
+export interface MaseHistory {
+  window_days: number;
+  min_participation: number;
+  weeks: string[];
+  models: MaseHistoryModel[];
+}
+
+export async function getMase30dHistory(frequencyHorizon: string): Promise<MaseHistory> {
+  const params = new URLSearchParams({ frequency_horizon: frequencyHorizon });
+  const response = await fetch(`/api/v1/models/mase-30d-history?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch the MASE history: ${response.status}`);
+  }
+  const data = await response.json();
+  if (!Array.isArray(data?.weeks) || !Array.isArray(data?.models)) {
+    throw new Error('Unexpected mase-30d-history payload');
   }
   return data;
 }
@@ -250,14 +271,21 @@ export async function getModelDetails(modelId: string): Promise<ModelDetails> {
   return Array.isArray(data) ? data[0] : data;
 }
 
-export async function getModelRankings(modelId: string): Promise<ModelDetailRankings> {
-  const url = `/api/v1/models/${modelId}/rankings`;
+export async function getModelArenaScores(
+  modelId: string,
+  metric: ScoreMetric = 'point'
+): Promise<ModelArenaScores> {
+  const url = `/api/v1/models/${modelId}/arena-scores?metric=${metric}`;
 
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to fetch model rankings: ${response.status}`);
+    throw new Error(`Failed to fetch model arena scores: ${response.status}`);
   }
-  return response.json();
+  const data = await response.json();
+  if (!Array.isArray(data?.scopes)) {
+    throw new Error('Unexpected model arena-scores payload');
+  }
+  return data;
 }
 
 export interface ModelActiveRound {
@@ -317,8 +345,8 @@ export async function getAllModels(): Promise<ModelListItem[]> {
 }
 
 export async function getModelSeriesForecasts(
-  modelId: string, 
-  definitionId: number, 
+  modelId: string,
+  definitionId: number,
   seriesId: number,
   startDate?: string,
   endDate?: string
@@ -326,7 +354,7 @@ export async function getModelSeriesForecasts(
   const params = new URLSearchParams();
   if (startDate) params.append('start_date', startDate);
   if (endDate) params.append('end_date', endDate);
-  
+
   const queryString = params.toString();
   const url = `/api/v1/models/${modelId}/definitions/${definitionId}/series/${seriesId}/forecasts${queryString ? '?' + queryString : ''}`;
 

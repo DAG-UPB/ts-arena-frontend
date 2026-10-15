@@ -26,14 +26,14 @@
 │               └── forecasts/
 │                   └── route.ts                  GET /api/v1/rounds/{id}/series/{id}/forecasts
 └── models/
-    ├── rankings/
-    │   └── route.ts                              GET /api/v1/models/rankings
-    ├── ranking-filters/
-    │   └── route.ts                              GET /api/v1/models/ranking-filters
+    ├── arena-scores/
+    │   └── route.ts                              GET /api/v1/models/arena-scores
+    ├── arena-score-filters/
+    │   └── route.ts                              GET /api/v1/models/arena-score-filters
     └── [modelId]/
         ├── route.ts                              GET /api/v1/models/{id}
-        ├── rankings/
-        │   └── route.ts                          GET /api/v1/models/{id}/rankings
+        ├── arena-scores/
+        │   └── route.ts                          GET /api/v1/models/{id}/arena-scores
         ├── series-by-definition/
         │   └── route.ts                          GET /api/v1/models/{id}/series-by-definition
         └── definitions/
@@ -63,10 +63,10 @@ Handles round-related API calls:
 
 ### modelService.ts
 Handles model-related API calls:
-- `getFilteredRankings()` - Get model rankings with filters
-- `getRankingFilters()` - Get available ranking filters
+- `getArenaScores()` - Get Arena Score leaderboards with filters
+- `getArenaScoreFilters()` - Get available Arena Score filters
 - `getModelDetails()` - Get model details
-- `getModelRankings()` - Get model ranking history
+- `getModelArenaScores()` - Get model Arena Score history
 - `getModelSeriesByDefinition()` - Get series grouped by definition
 - `getModelSeriesForecasts()` - Get model forecasts across rounds
 

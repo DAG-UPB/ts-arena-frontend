@@ -6,8 +6,8 @@
  * every other model is Open Track. This module only names and describes the two tracks —
  * it never decides membership itself.
  *
- * ELO is fitted once over both tracks together. A single-track view therefore shows the
- * combined ranking restricted to that track, never a separate fit.
+ * The Arena Score is fitted once over both tracks together. A single-track view therefore
+ * shows the same scores with ranks counted within the track, never a separate fit.
  */
 
 export type Track = 'reference' | 'open';

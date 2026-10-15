@@ -5,10 +5,10 @@ import { createLogger } from '@/src/lib/logger';
 const API_BASE_URL = process.env.NEXT_PUBLIC_DASH_BOARD_API_URL || '';
 const API_KEY = process.env.NEXT_PUBLIC_DASH_BOARD_API_KEY || '';
 
-const log = createLogger('/api/v1/models/ranking-filters');
+const log = createLogger('/api/v1/models/arena-score-filters');
 
 export async function GET() {
-  const path = '/api/v1/models/ranking-filters';
+  const path = '/api/v1/models/arena-score-filters';
   const url = `${API_BASE_URL}${path}`;
 
   log.debug(`upstream GET ${path}`);
@@ -19,18 +19,19 @@ export async function GET() {
         'X-API-Key': API_KEY,
       }
     });
-    
+
     if (!response.ok) {
+      log.error(`upstream ${response.status} on ${path}`);
       return NextResponse.json(
-        { error: 'Failed to fetch ranking filters' },
+        { error: 'Failed to fetch arena score filters' },
         { status: response.status }
       );
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    log.error('failed to fetch ranking filters', error);
+    log.error('failed to fetch arena score filters', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

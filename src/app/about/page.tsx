@@ -156,8 +156,8 @@ export default function AboutPage() {
               <p className="text-xs text-gray-600">Mean Absolute Scaled Error provides scale-independent accuracy scores comparable across time series.</p>
             </div>
             <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
-              <div className="font-semibold text-gray-800 text-sm mb-1">ELO Ranking</div>
-              <p className="text-xs text-gray-600">Pairwise ELO ratings with confidence intervals enable fair comparison between models over time.</p>
+              <div className="font-semibold text-gray-800 text-sm mb-1">Arena Score</div>
+              <p className="text-xs text-gray-600">Compares models series by series on the ratio of their errors, with a 95 % confidence interval. The rank is the place by score, shown with the range of places the intervals allow.</p>
             </div>
           </div>
         </div>
