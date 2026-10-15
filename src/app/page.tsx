@@ -10,6 +10,7 @@ import CancelledRoundsNotice, { CancelledRoundsBanner } from '@/src/components/C
 import SectionNav, { NavSection } from '@/src/components/SectionNav';
 import TimeSeriesChart from '@/src/components/TimeSeriesChart';
 import ArenaParetoChart from '@/src/components/ArenaParetoChart';
+import MaseTrendChart from '@/src/components/MaseTrendChart';
 import {
   getArenaScores,
   getArenaScoreFilters,
@@ -34,6 +35,7 @@ const SERIES_ID:number = parseInt(process.env.NEXT_PUBLIC_SERIES_ID || '1373');
 const PAGE_SECTIONS: NavSection[] = [
   { id: 'live-forecast', label: 'Live Forecast' },
   { id: 'overall-ranking', label: 'Overall Ranking' },
+  { id: 'mase-trend', label: 'MASE over Time' },
   { id: 'pareto-front', label: 'Size vs. Score' },
   { id: 'rankings-by-challenge', label: 'By Challenge' },
   { id: 'rankings-by-frequency-horizon', label: 'By Frequency & Horizon' },
@@ -460,6 +462,20 @@ export default function Home() {
                   onMetricChange={setMetric}
                 />
               )}
+            </section>
+
+            {/* Weekly 30-day MASE */}
+            <section id="mase-trend" className="mb-8 scroll-mt-20 lg:scroll-mt-8">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-1">MASE over Time</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Each model&apos;s 30-day MASE, week by week. Lower is better.
+              </p>
+              <MaseTrendChart
+                frequencyHorizons={filterOptions.frequency_horizons}
+                formatFrequencyHorizon={formatFrequencyHorizon}
+                trackView={trackView}
+                onTrackViewChange={setTrackView}
+              />
             </section>
 
             {/* Model size vs. Arena Score */}
