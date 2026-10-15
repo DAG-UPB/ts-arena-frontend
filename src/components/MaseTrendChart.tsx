@@ -25,6 +25,17 @@ const BASELINE = 'seasonal-naive';
 const LINE_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c'];
 const OTHER_COLOR = '#d1d5db';
 const BASELINE_COLOR = '#4b5563';
+const WINDOW_DAYS = 365;
+
+// ISO week strings sort chronologically, so the cutoff is a plain string comparison.
+function lastYear(weeks: string[]): string[] {
+  const newest = weeks[weeks.length - 1];
+  if (!newest) return [];
+  const cutoff = new Date(`${newest.slice(0, 10)}T00:00:00Z`);
+  cutoff.setUTCDate(cutoff.getUTCDate() - WINDOW_DAYS);
+  const from = cutoff.toISOString().slice(0, 10);
+  return weeks.filter((w) => w.slice(0, 10) > from);
+}
 
 function valueOf(view: ValueView, p: { mase_30d: number | null; mase_rel_30d: number | null }): number | null {
   return view === 'absolute' ? p.mase_30d : p.mase_rel_30d;
@@ -92,9 +103,13 @@ export default function MaseTrendChart({
   }, [visible, scope, histories, failed]);
 
   const history = scope ? histories[scope] : undefined;
+  const weeks = useMemo(() => lastYear(history?.weeks ?? []), [history]);
 
   const { highlighted, others, baseline } = useMemo(() => {
-    const models = (history?.models ?? []).filter((m) => trackView === 'all' || m.track === trackView);
+    const shown = new Set(weeks);
+    const models = (history?.models ?? []).filter(
+      (m) => (trackView === 'all' || m.track === trackView) && m.points.some((p) => shown.has(p.week))
+    );
     const baseline = models.find(isBaseline) ?? null;
     const ranked = models
       .filter((m) => !isBaseline(m) && latestOf(valueView, m) != null)
@@ -103,7 +118,7 @@ export default function MaseTrendChart({
     const top = new Set(highlighted.map((m) => m.model_id));
     const others = models.filter((m) => !top.has(m.model_id) && m !== baseline);
     return { highlighted, others, baseline };
-  }, [history, trackView, valueView]);
+  }, [history, weeks, trackView, valueView]);
 
   const trace = (
     m: MaseHistoryModel,
@@ -111,7 +126,6 @@ export default function MaseTrendChart({
     legend: { show: boolean; group?: string; name?: string }
   ) => {
     const byWeek = new Map(m.points.map((p) => [p.week, p]));
-    const weeks = history?.weeks ?? [];
     return {
       type: 'scatter' as const,
       mode: 'lines' as const,
