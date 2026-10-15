@@ -9,6 +9,7 @@ import RankingLegend from '@/src/components/RankingLegend';
 import CancelledRoundsNotice, { CancelledRoundsBanner } from '@/src/components/CancelledRoundsNotice';
 import SectionNav, { NavSection } from '@/src/components/SectionNav';
 import TimeSeriesChart from '@/src/components/TimeSeriesChart';
+import ArenaParetoChart from '@/src/components/ArenaParetoChart';
 import {
   getArenaScores,
   getArenaScoreFilters,
@@ -33,6 +34,7 @@ const SERIES_ID:number = parseInt(process.env.NEXT_PUBLIC_SERIES_ID || '1373');
 const PAGE_SECTIONS: NavSection[] = [
   { id: 'live-forecast', label: 'Live Forecast' },
   { id: 'overall-ranking', label: 'Overall Ranking' },
+  { id: 'pareto-front', label: 'Size vs. Score' },
   { id: 'rankings-by-challenge', label: 'By Challenge' },
   { id: 'rankings-by-frequency-horizon', label: 'By Frequency & Horizon' },
 ];
@@ -452,6 +454,27 @@ export default function Home() {
                 <RankingTableArenaScore
                   rankings={board.overall}
                   limit={COLLAPSED_ROWS}
+                  trackView={trackView}
+                  onTrackViewChange={setTrackView}
+                  metric={metric}
+                  onMetricChange={setMetric}
+                />
+              )}
+            </section>
+
+            {/* Model size vs. Arena Score */}
+            <section id="pareto-front" className="mb-8 scroll-mt-20 lg:scroll-mt-8">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-1">Model Size vs. Arena Score</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                How much accuracy each model size buys. The line marks the best score reached at each size.
+              </p>
+              {loading ? (
+                <RankingPlaceholder />
+              ) : loadFailed ? (
+                <RankingUnavailable />
+              ) : (
+                <ArenaParetoChart
+                  rows={board.overall}
                   trackView={trackView}
                   onTrackViewChange={setTrackView}
                   metric={metric}
