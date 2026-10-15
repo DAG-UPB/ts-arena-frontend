@@ -248,38 +248,6 @@ export default function ArenaParetoChart({
         </p>
         <p>Sizes come from the model registry. Open Track models report their own.</p>
       </div>
-
-      <details className="mt-3 text-sm">
-        <summary className="cursor-pointer text-gray-600 hover:text-gray-900">Show as table</summary>
-        <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full text-left text-xs sm:text-sm">
-            <thead className="text-gray-500">
-              <tr>
-                <th className="py-1 pr-4 font-medium">Model</th>
-                <th className="py-1 pr-4 font-medium">Track</th>
-                <th className="py-1 pr-4 font-medium text-right">Parameters</th>
-                <th className="py-1 pr-4 font-medium text-right">Arena Score</th>
-                <th className="py-1 pr-4 font-medium text-right">95 % interval</th>
-                <th className="py-1 font-medium">Pareto front</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-gray-700">
-              {points.map((p) => (
-                <tr key={p.row.model_id}>
-                  <td className="py-1 pr-4">{p.row.model_name}</td>
-                  <td className="py-1 pr-4">{TRACK_NAME[p.row.track]}</td>
-                  <td className="py-1 pr-4 text-right">{formatSize(p.size)}</td>
-                  <td className="py-1 pr-4 text-right">{p.score.toFixed(1)}</td>
-                  <td className="py-1 pr-4 text-right">
-                    {p.row.ci_lower?.toFixed(1) ?? '–'} to {p.row.ci_upper?.toFixed(1) ?? '–'}
-                  </td>
-                  <td className="py-1">{p.onFront ? 'yes' : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
     </div>
   );
 }
